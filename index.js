@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -10,7 +11,6 @@ let mainWindow;
 
 // Check if the app is in development mode
 const isDev = process.env.NODE_ENV === 'development';
-console.log("IS DEV???", isDev)
 
 app.on('ready', () => {
     mainWindow = new BrowserWindow({
@@ -28,7 +28,7 @@ app.on('ready', () => {
         mainWindow.loadURL('http://localhost:8080');
     } else {
         // In production, load the index.html from the dist directory
-        mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+        mainWindow.loadFile(path.join(__dirname, 'dist-vue', 'index.html'));
     }
 
     // Open developer tools in development mode
