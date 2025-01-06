@@ -8,6 +8,10 @@ const readdirAsync = promisify(fs.readdir);
 
 let mainWindow;
 
+// Check if the app is in development mode
+const isDev = process.env.NODE_ENV === 'development';
+console.log("IS DEV???", isDev)
+
 app.on('ready', () => {
     mainWindow = new BrowserWindow({
         width: 800,
@@ -17,11 +21,20 @@ app.on('ready', () => {
           contextIsolation: true,  // Isolate the context for security
           preload: path.join(__dirname, 'preload.js'),  // Make sure this path is correct
         },
-      });
+    });
 
-  // Load the Vue app from the running development server
-  mainWindow.loadURL('http://localhost:8080');
-  mainWindow.webContents.openDevTools();
+    if (isDev) {
+        // In development mode, load from the dev server
+        mainWindow.loadURL('http://localhost:8080');
+    } else {
+        // In production, load the index.html from the dist directory
+        mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    }
+
+    // Open developer tools in development mode
+    if (isDev) {
+        mainWindow.webContents.openDevTools();
+    }
 });
 
 // Open the directory picker dialog
