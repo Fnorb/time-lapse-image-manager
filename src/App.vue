@@ -240,28 +240,7 @@ export default {
 };
 </script>
 
-<style>
-/* Log section styles */
-.log-container {
-  max-height: 300px; /* Limit the height */
-  overflow-y: scroll; /* Enable vertical scrolling */
-  border: 1px solid #ccc;
-  padding: 10px;
-  background-color: #f9f9f9;
-  font-family: monospace;
-}
 
-.log-message {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 0
-}
-
-.log-message:nth-child(odd) {
-  background-color: #f1f1f1;
-}
-
-.log-message:nth-child(even) {
-  background-color: #e7e7e7;
-}
+<style lang="stylus">
+  @import './assets/styles/global.styl'
 </style>
