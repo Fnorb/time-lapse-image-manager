@@ -1,114 +1,116 @@
 <template>
   <div id="app">
-    <h1>Welcome to TimeLapseImageManager</h1>
-    <div class="container mt-5">
-      <span
-        class="question-mark"
-        data-bs-toggle="tooltip"
-        title="This is some dummy text for the info tooltip."
-      >
-        <u>?</u>
-      </span>
+    <div class="app-container">
+      <div class="header">
+        <h1>TimeLapseTidy</h1>
+      </div>
 
-      <p>Hover over the question mark for more information.</p>
+      <div class="config">
+        <!-- Config Section -->
+        <div class="container">
+          <span class="question-mark"><u>?</u></span>
 
-      <!-- Button to open file dialog -->
-      <button
-        class="btn btn-primary mt-4"
-        :disabled="isProcessing"
-        @click="pickDirectory"
-      >
-        Pick Source Directory
-      </button>
+          <p>Hover over the question mark for more information.</p>
 
-      <!-- Options Section -->
-      <div class="mt-4">
-        <h3>Options</h3>
-
-        <!-- Remove Bright/Dark Images Option -->
-        <div class="form-check mt-3">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="brightnessOption"
-            v-model="options.brightnessCheck"
+          <!-- Button to open file dialog -->
+          <button
+            class="btn btn-primary"
             :disabled="isProcessing"
-          />
-          <label class="form-check-label" for="brightnessOption">
-            Remove Bright/Dark Images
-          </label>
-        </div>
+            @click="pickDirectory"
+          >
+            Pick Source Directory
+          </button>
 
-        <!-- Minimum and Maximum Brightness Inputs -->
-        <div v-if="options.brightnessCheck" class="mt-3">
-          <label for="minBrightness">Min Brightness (0-100):</label>
-          <input
-            type="number"
-            id="minBrightness"
-            v-model="options.minBrightness"
-            :disabled="isProcessing"
-            min="0"
-            max="100"
-            class="form-control"
-          />
-          <label for="maxBrightness" class="mt-2">Max Brightness (0-100):</label>
-          <input
-            type="number"
-            id="maxBrightness"
-            v-model="options.maxBrightness"
-            :disabled="isProcessing"
-            min="0"
-            max="100"
-            class="form-control"
-          />
-        </div>
+          <!-- Options Section -->
+          <div>
+            <h3>Options</h3>
 
-        <!-- Rename Option -->
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="renameOption"
-            v-model="options.rename"
-            :disabled="isProcessing"
-          />
-          <label class="form-check-label" for="renameOption">
-            Rename images in sequence (e.g., img-00001.jpg)
-          </label>
+            <!-- Remove Bright/Dark Images Option -->
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="brightnessOption"
+                v-model="options.brightnessCheck"
+                :disabled="isProcessing"
+              />
+              <label class="form-check-label" for="brightnessOption">
+                Remove Bright/Dark Images
+              </label>
+            </div>
+
+            <!-- Minimum and Maximum Brightness Inputs -->
+            <div v-if="options.brightnessCheck">
+              <label for="minBrightness">Min Brightness (0-100):</label>
+              <input
+                type="number"
+                id="minBrightness"
+                v-model="options.minBrightness"
+                :disabled="isProcessing"
+                min="0"
+                max="100"
+                class="form-control"
+              />
+              <label for="maxBrightness">Max Brightness (0-100):</label>
+              <input
+                type="number"
+                id="maxBrightness"
+                v-model="options.maxBrightness"
+                :disabled="isProcessing"
+                min="0"
+                max="100"
+                class="form-control"
+              />
+            </div>
+
+            <!-- Rename Option -->
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="renameOption"
+                v-model="options.rename"
+                :disabled="isProcessing"
+              />
+              <label class="form-check-label" for="renameOption">
+                Rename images in sequence (e.g., img-00001.jpg)
+              </label>
+            </div>
+          </div>
+
+          <!-- Start Button -->
+          <button
+            class="btn btn-success"
+            :disabled="!canStart || isProcessing"
+            @click="startProcessing"
+          >
+            {{ isProcessing ? currentTask : 'Start' }}
+          </button>
+
+          <!-- Status of processing -->
+          <div v-if="processStatus">
+            <p>{{ processStatus }}</p>
+          </div>
         </div>
       </div>
 
-      <!-- Start Button -->
-      <button
-        class="btn btn-success mt-4"
-        :disabled="!canStart || isProcessing"
-        @click="startProcessing"
-      >
-        {{ isProcessing ? currentTask : 'Start' }}
-      </button>
-
-      <!-- Status of processing -->
-      <div v-if="processStatus" class="mt-4">
-        <p>{{ processStatus }}</p>
-      </div>
-
-      <!-- Log Section -->
-      <div class="mt-4">
-        <h4>Log</h4>
-        <div class="log-container" ref="logContainer">
-          <p v-for="(log, index) in logs" :key="index" class="log-message">
-            {{ log }}
-          </p>
+      <div class="output">
+        <!-- Log Section -->
+        <div>
+          <h4>Log</h4>
+          <div class="log-container" ref="logContainer">
+            <p v-for="(log, index) in logs" :key="index" class="log-message">
+              {{ log }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import 'bootstrap/dist/css/bootstrap.min.css';
-import * as bootstrap from 'bootstrap';
 
+<script>
 export default {
   name: 'App',
   data() {
@@ -136,10 +138,6 @@ export default {
         (this.options.rename || this.options.brightnessCheck) // Ensure at least one option is selected
       );
     },
-  },
-  mounted() {
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltipTriggerList.forEach((tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl));
   },
   methods: {
     // Log method to add log messages
@@ -242,5 +240,6 @@ export default {
 
 
 <style lang="stylus">
+  @import 'normalize.css'
   @import './assets/styles/global.styl'
 </style>

@@ -1,7 +1,51 @@
-/* Log section styles */
+// Color variables
+colorBlack = #000000
+colorDarkBlue = #0B192C
+colorlightBlue = #1E3E62
+colorOrange = #FF6500
+
+html, body, #app, .app-container
+  height 100%
+
+.app-container
+  display grid
+  grid-template-columns 60% 40%
+  grid-template-rows 80px auto
+  grid-template-areas "header header" "config output"
+  gap 20px
+  padding 20px
+  background-color colorlightBlue
+
+.header
+  grid-area header
+  background-color colorDarkBlue
+  color white
+  padding 20px
+  border-radius 8px
+  display flex
+  justify-content center
+  align-items center
+  height 80px
+
+h1
+  margin 0
+  font-size 2rem
+
+.config
+  grid-area config
+  background-color #f4f4f4
+  padding 15px
+  border-radius 8px
+
+.output
+  grid-area output
+  background-color #fff
+  padding 15px
+  border-radius 8px
+
 .log-container
-  max-height 300px // Limit the height
-  overflow-y scroll // Enable vertical scrolling
+  max-height 300px
+  overflow-y auto
   border 1px solid #ccc
   padding 10px
   background-color #f9f9f9
@@ -12,8 +56,8 @@
   color #333
   margin-bottom 0
 
-  &:nth-child(odd)
-    background-color #f1f1f1
+.log-message:nth-child(odd)
+  background-color #f1f1f1
 
-  &:nth-child(even)
-    background-color #e7e7e7
+.log-message:nth-child(even)
+  background-color #e7e7e7
