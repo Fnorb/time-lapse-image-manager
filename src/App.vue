@@ -1,5 +1,4 @@
 <template>
-  <div id="app">
     <div class="app-container">
       <div class="header">
         <h1>TimeLapseTidy</h1>
@@ -8,9 +7,6 @@
       <div class="config">
         <!-- Config Section -->
         <div class="container">
-          <span class="question-mark"><u>?</u></span>
-
-          <p>Hover over the question mark for more information.</p>
 
           <!-- Button to open file dialog -->
           <button
@@ -37,6 +33,7 @@
               <label class="form-check-label" for="brightnessOption">
                 Remove Bright/Dark Images
               </label>
+              <span v-tooltip="'You have ' + count + ' new messages.'">?</span>
             </div>
 
             <!-- Minimum and Maximum Brightness Inputs -->
@@ -106,7 +103,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 
@@ -242,4 +238,10 @@ export default {
 <style lang="stylus">
   @import 'normalize.css'
   @import './assets/styles/global.styl'
+
+  .v-tooltip__content
+    visibility visible !important
+    opacity 1 !important
+    position absolute !important
+    z-index 9999 !important
 </style>
