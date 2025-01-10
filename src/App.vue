@@ -5,9 +5,7 @@
     </div>
 
     <div class="config">
-      <!-- Config Section -->
       <div class="container">
-
         <!-- Button to open file dialog -->
         <button
           class="btn btn-primary"
@@ -16,6 +14,7 @@
         >
           Pick Source Directory
         </button>
+        <span>{{ directoryPath }}</span>
 
         <!-- Options Section -->
         <div>
@@ -31,16 +30,15 @@
               :disabled="isProcessing"
             />
             <label class="form-check-label" for="minBrightnessOption">
-              Remove Images with Minimum Brightness Below Value
+              Remove images with brightness below
             </label>
-            <span v-tooltip="'Set a minimum brightness threshold to remove dark images.'">?</span>
             <input
               type="number"
               v-model="options.minBrightness"
               :disabled="isProcessing"
-              min="0"
-              max="100"
+              @blur="validateField('minBrightness')"
               class="form-control-inline"
+              :class="{ error: validationErrors.minBrightness }"
             />
             <span class="brightness-value">(0-100)</span>
           </div>
@@ -55,16 +53,15 @@
               :disabled="isProcessing"
             />
             <label class="form-check-label" for="maxBrightnessOption">
-              Remove Images with Maximum Brightness Above Value
+              Remove images with brightness above
             </label>
-            <span v-tooltip="'Set a maximum brightness threshold to remove overly bright images.'">?</span>
             <input
               type="number"
               v-model="options.maxBrightness"
               :disabled="isProcessing"
-              min="0"
-              max="100"
+              @blur="validateField('maxBrightness')"
               class="form-control-inline"
+              :class="{ error: validationErrors.maxBrightness }"
             />
             <span class="brightness-value">(0-100)</span>
           </div>
@@ -81,27 +78,25 @@
             <label class="form-check-label" for="neighborDifferenceOption">
               Remove Images with Difference from Neighbors Above Value
             </label>
-            <span v-tooltip="'Set a threshold for image difference between neighbors to remove sudden changes.'">?</span>
             <input
               type="number"
               v-model="options.neighborDifference"
               :disabled="isProcessing"
-              min="0"
-              max="100"
+              @blur="validateField('neighborDifference')"
               class="form-control-inline"
+              :class="{ error: validationErrors.neighborDifference }"
             />
             <span class="brightness-value">(0-100)</span>
           </div>
-
         </div>
 
-        <!-- Start Processing Brightness Check -->
+        <!-- Start/Cancel Button -->
         <button
           class="btn btn-success"
-          :disabled="!canStartBrightnessCheck || isProcessing"
-          @click="startProcessing"
+          :disabled="!canStartProcessing"
+          @click="isProcessing ? cancelProcessing() : startProcessing()"
         >
-          {{ isProcessing ? currentTask : 'Start Processing' }}
+          {{ isProcessing ? 'Cancel Processing' : 'Start Processing' }}
         </button>
 
         <!-- Rename Button -->
@@ -120,7 +115,7 @@
       </div>
     </div>
 
-    <div class="output">
+    <div class="output" v-if="logOutput">
       <!-- Log Section -->
       <div>
         <h4>Log</h4>
@@ -133,46 +128,53 @@
     </div>
   </div>
 </template>
-
 <script>
 export default {
   name: 'App',
   data() {
     return {
-      fileCount: null, // To store the number of files in the directory
-      directoryPath: null, // To store the selected directory path
-      processStatus: null, // To display processing status
-      isProcessing: false, // Indicates if the process is running
-      currentTask: '', // Indicates the current task being performed
+      fileCount: null,
+      directoryPath: null,
+      processStatus: null,
+      isProcessing: false,
+      currentTask: '',
       options: {
-        minBrightnessCheck: false, // Checkbox for minimum brightness check
-        minBrightness: 20, // Minimum brightness value
-        maxBrightnessCheck: false, // Checkbox for maximum brightness check
-        maxBrightness: 80, // Maximum brightness value
-        neighborDifferenceCheck: false, // Checkbox for neighbor difference check
-        neighborDifference: 20, // Neighbor difference value
+        minBrightnessCheck: false,
+        minBrightness: 20,
+        maxBrightnessCheck: false,
+        maxBrightness: 80,
+        neighborDifferenceCheck: false,
+        neighborDifference: 20,
       },
-      logs: [] // Array to hold log messages
+      validationErrors: {
+        minBrightness: false,
+        maxBrightness: false,
+        neighborDifference: false,
+      },
+      logOutput: false,
+      logs: [],
+      cancelProcessingRequested: false,  // Track if cancel was requested
     };
   },
   computed: {
-    // Determine if the Processing button should be enabled
     canStartProcessing() {
       return (
-        this.directoryPath &&
-        this.fileCount > 0 &&
-        (this.options.minBrightnessCheck || this.options.maxBrightnessCheck || this.options.neighborDifferenceCheck)
+        this.directoryPath && // Ensure a directory is selected
+        (this.options.minBrightnessCheck || 
+        this.options.maxBrightnessCheck || 
+        this.options.neighborDifferenceCheck)
       );
     },
   },
   methods: {
-    // Log method to add log messages
     logMessage(message) {
-      this.logs.push(message);
-      this.$nextTick(() => {
-        const logContainer = this.$refs.logContainer;
-        logContainer.scrollTop = logContainer.scrollHeight; // Scroll to bottom
-      });
+      if (this.logOutput) {
+        this.logs.push(message);
+        this.$nextTick(() => {
+          const logContainer = this.$refs.logContainer;
+          logContainer.scrollTop = logContainer.scrollHeight;
+        });
+      }
     },
 
     async pickDirectory() {
@@ -180,7 +182,7 @@ export default {
         const { fileCount, directoryPath } = await window.electronAPI.openDirectory();
         this.fileCount = fileCount;
         this.directoryPath = directoryPath;
-        this.processStatus = null; // Reset status
+        this.processStatus = null;
         this.logMessage(`Opened directory with ${fileCount} files.`);
       } catch (error) {
         console.error('Failed to pick directory or count files', error);
@@ -188,86 +190,170 @@ export default {
       }
     },
 
-    async startProcessing() {
-      this.isProcessing = true; // Disable UI
-      this.processStatus = null; // Clear status
-      this.logMessage('Starting processing...');
+    validateField(field) {
+      const value = this.options[field];
+      const isChecked = this.options[`${field}Check`];
 
-      // Clear the logs before starting the new process
-      this.logs = [];
-
-      try {
-        this.currentTask = 'Processing Images...'; // Update current task
-        const result = await window.electronAPI.processImages(
-          this.directoryPath,
-          this.options.minBrightnessCheck ? this.options.minBrightness : undefined,
-          this.options.maxBrightnessCheck ? this.options.maxBrightness : undefined,
-          this.options.neighborDifferenceCheck ? this.options.neighborDifference : undefined
-        );
-        if (result.success) {
-          this.processStatus = `Processed ${result.processedCount} images successfully.`; // Success message
-          this.logMessage(`Processed ${result.processedCount} images successfully.`);
-        } else {
-          this.processStatus = `Processing failed: ${result.error}`; // Error message
-          this.logMessage(`Processing failed: ${result.error}`);
-        }
-      } catch (error) {
-        console.error('Failed to process images', error);
-        this.processStatus = 'An unexpected error occurred during processing.'; // Error handling
-        this.logMessage('An unexpected error occurred during processing.');
-      } finally {
-        this.currentTask = ''; // Clear current task
-        this.isProcessing = false; // Re-enable UI
+      if (isChecked && (value < 0 || value > 100 || value === null || value === undefined)) {
+        this.validationErrors[field] = true;
+      } else {
+        this.validationErrors[field] = false;
       }
     },
 
+    async startProcessing() {
+      if (!this.validateAllFields()) {
+        this.logMessage("Validation failed. Please correct the errors before proceeding.");
+        return;
+      }
+
+      this.isProcessing = true;
+      this.processStatus = null;
+      this.logMessage('Starting processing...');
+      this.cancelProcessingRequested = false;  // Reset cancel flag
+
+      const payload = {
+        directoryPath: this.directoryPath,
+        options: {
+          minBrightness: this.options.minBrightnessCheck ? this.options.minBrightness : undefined,
+          maxBrightness: this.options.maxBrightnessCheck ? this.options.maxBrightness : undefined,
+          neighborDifference: this.options.neighborDifferenceCheck ? this.options.neighborDifference : undefined,
+        },
+      };
+
+      try {
+        this.currentTask = 'Processing Images...';
+
+        const result = await window.electronAPI.processImages(payload);
+
+        if (result.success) {
+          this.processStatus = `Processed ${result.processedCount} images successfully.`;
+          this.logMessage(`Processed ${result.processedCount} images successfully.`);
+        } else {
+          this.processStatus = `Processing failed: ${result.error}`;
+          this.logMessage(`Processing failed: ${result.error}`);
+        }
+
+      } catch (error) {
+        console.error('Failed to process images', error);
+        this.processStatus = 'An unexpected error occurred during processing.';
+        this.logMessage('An unexpected error occurred during processing.');
+      } finally {
+        this.currentTask = '';
+        this.isProcessing = false;
+      }
+    },
+
+    cancelProcessing() {
+      this.cancelProcessingRequested = true;
+      this.isProcessing = false;
+      this.processStatus = 'Processing has been canceled.';
+      this.logMessage('Processing has been canceled.');
+      window.electronAPI.cancelProcessing(); // Send cancel request to backend
+    },
+
+    validateAllFields() {
+      let valid = true;
+
+      if (this.options.minBrightnessCheck && (this.options.minBrightness < 0 || this.options.minBrightness > 100)) {
+        this.logMessage("Minimum brightness must be between 0 and 100.");
+        valid = false;
+      }
+
+      if (this.options.maxBrightnessCheck && (this.options.maxBrightness < 0 || this.options.maxBrightness > 100)) {
+        this.logMessage("Maximum brightness must be between 0 and 100.");
+        valid = false;
+      }
+
+      if (this.options.neighborDifferenceCheck && (this.options.neighborDifference < 0 || this.options.neighborDifference > 100)) {
+        this.logMessage("Neighbor difference must be between 0 and 100.");
+        valid = false;
+      }
+
+      return valid;
+    },
+
     async startRenaming() {
-      this.isProcessing = true; // Disable UI
-      this.processStatus = null; // Clear status
+      this.isProcessing = true;
+      this.processStatus = null;
       this.logMessage('Starting renaming process...');
 
       try {
         const result = await window.electronAPI.renameFiles(this.directoryPath);
 
         if (result.success) {
-          this.processStatus = `Renamed ${result.renamedCount} files successfully.`; // Success message
+          this.processStatus = `Renamed ${result.renamedCount} files successfully.`;
           this.logMessage(`Renamed ${result.renamedCount} files successfully.`);
         } else {
-          this.processStatus = `Renaming failed: ${result.error || 'No files to rename'}`; // Error message
+          this.processStatus = `Renaming failed: ${result.error || 'No files to rename'}`;
           this.logMessage(`Renaming failed: ${result.error || 'No files to rename'}`);
         }
       } catch (error) {
         console.error('Failed to rename files', error);
-        this.processStatus = 'An unexpected error occurred during renaming.'; // Error handling
+        this.processStatus = 'An unexpected error occurred during renaming.';
         this.logMessage('An unexpected error occurred during renaming.');
       } finally {
-        this.isProcessing = false; // Re-enable UI
+        this.isProcessing = false;
       }
+    },
+
+    watchCheckbox(field) {
+      if (this.options[`${field}Check`]) {
+        this.validateField(field);
+      } else {
+        this.validationErrors[field] = false;
+      }
+    },
+
+    // Method to handle image status updates
+    onImageStatus(file, status) {
+      this.logMessage(`Image: ${file} - Status: ${status}`);
+      console.log(`Received status for ${file}: ${status}`); // Log directly to console
+    },
+  },
+  mounted() {
+    window.electronAPI.onImageStatus(this.onImageStatus); // Ensure callback is properly set
+  },
+  beforeUnmount() {
+    window.electronAPI.removeImageStatusListener();
+  },
+  watch: {
+    'options.minBrightnessCheck'() {
+      this.watchCheckbox('minBrightness');
+    },
+    'options.maxBrightnessCheck'() {
+      this.watchCheckbox('maxBrightness');
+    },
+    'options.neighborDifferenceCheck'() {
+      this.watchCheckbox('neighborDifference');
     },
   },
 };
 </script>
 
+
 <style lang="stylus">
 @import 'normalize.css'
 @import './assets/styles/global.styl'
 
-.v-tooltip__content
-  visibility visible !important
-  opacity 1 !important
-  position absolute !important
-  z-index 9999 !important
+.error {
+  border: 2px solid red;
+  background-color: #ffe6e6;
+}
 
-.form-check
-  margin-bottom: 1rem
+.form-check {
+  margin-bottom: 1rem;
+}
 
-.form-control-inline
-  width: 80px
-  display: inline-block
-  margin-left: 10px
+.form-control-inline {
+  width: 80px;
+  display: inline-block;
+  margin-left: 10px;
+}
 
-.brightness-value
-  margin-left: 5px
-  font-size: 0.9rem
-  color: gray
+.brightness-value {
+  margin-left: 5px;
+  font-size: 0.9rem;
+  color: gray;
+}
 </style>

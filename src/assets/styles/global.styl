@@ -8,12 +8,9 @@ html, body, #app, .app-container
   height 100%
 
 .app-container
-  display grid
-  grid-template-columns 60% 40%
-  grid-template-rows 80px auto
-  grid-template-areas "header header" "config output"
-  gap 20px
-  padding 20px
+  display flex
+  flex-direction column
+  height 100%
   background-color colorlightBlue
 
 .header
@@ -21,7 +18,6 @@ html, body, #app, .app-container
   background-color colorDarkBlue
   color white
   padding 20px
-  border-radius 8px
   display flex
   justify-content center
   align-items center
@@ -35,13 +31,12 @@ h1
   grid-area config
   background-color #f4f4f4
   padding 15px
-  border-radius 8px
+  height 100%
 
 .output
   grid-area output
   background-color #fff
   padding 15px
-  border-radius 8px
 
 .log-container
   max-height 300px
@@ -61,3 +56,7 @@ h1
 
 .log-message:nth-child(even)
   background-color #e7e7e7
+
+.error
+  border 2px solid red
+  background-color #ffe6e6

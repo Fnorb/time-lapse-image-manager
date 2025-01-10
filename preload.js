@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+/*const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // Open the directory
@@ -22,4 +22,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Listen for renaming-failed event (when renaming fails)
   onRenamingFailed: (callback) => ipcRenderer.on('renaming-failed', (event, message) => callback(message))
+});*/
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  processImages: (payload) => ipcRenderer.invoke('processImages', payload),
+  
+  // Add listener for image status updates
+  onImageStatus: (callback) => ipcRenderer.on('image-status', (event, { file, status }) => {
+    callback(file, status); // Trigger the callback with the file and its status
+  }),
+
+  // Optionally, remove listener when no longer needed to prevent memory leaks
+  removeImageStatusListener: () => ipcRenderer.removeAllListeners('image-status'),
+
+  openDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
+
+  // Handle canceling the processing
+  cancelProcessing: () => ipcRenderer.invoke('cancelProcessing'),
 });
+
