@@ -138,3 +138,39 @@ ipcMain.handle('cancelProcessing', () => {
   console.log('Processing has been canceled.');
   return { success: true };
 });
+
+
+// Rename Files
+ipcMain.handle('files:rename', async (event, directoryPath) => {
+  const outputPrefix = 'img-';
+  const outputExtension = '.jpg';
+
+  try {
+    const files = await readdirAsync(directoryPath);
+    const jpgFiles = files.filter(file => file.endsWith(outputExtension));
+
+    jpgFiles.sort();
+    let renamedCount = 0;
+
+    for (let i = 0; i < jpgFiles.length; i++) {
+      const oldFilePath = path.join(directoryPath, jpgFiles[i]);
+      const newFileName = `${outputPrefix}${String(i + 1).padStart(5, '0')}${outputExtension}`;
+      const newFilePath = path.join(directoryPath, newFileName);
+
+      // Rename the file
+      await fs.promises.rename(oldFilePath, newFilePath);
+      renamedCount++;
+
+      // Send the rename event back to the renderer with the old and new file names
+      event.sender.send('file-renamed', `${jpgFiles[i]} -> ${newFileName}`);
+    }
+
+    // Send a final completion message once all files are renamed
+    event.sender.send('renaming-complete', `All files renamed successfully: ${renamedCount} files`);
+    return { success: true, renamedCount };
+  } catch (error) {
+    console.error('Error renaming files:', error);
+    event.sender.send('renaming-failed', `Renaming failed: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+});

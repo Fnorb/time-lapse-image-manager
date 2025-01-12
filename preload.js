@@ -8,8 +8,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeBrightnessImages: (directoryPath, minBrightness, maxBrightness) => 
     ipcRenderer.invoke('images:removeBrightness', directoryPath, minBrightness, maxBrightness),
 
-  // Rename files and handle the events for renaming
-  renameFiles: (directoryPath) => ipcRenderer.invoke('files:rename', directoryPath),
 
   // Listen for file-renamed event (send messages when files are renamed)
   onFileRenamed: (callback) => ipcRenderer.on('file-renamed', (event, message) => callback(message)),
@@ -40,5 +38,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Handle canceling the processing
   cancelProcessing: () => ipcRenderer.invoke('cancelProcessing'),
+
+  // Rename files and handle the events for renaming
+  renameFiles: (directoryPath) => ipcRenderer.invoke('files:rename', directoryPath),
 });
 
