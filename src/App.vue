@@ -4,7 +4,20 @@
       <h1>TimeLapseTidy</h1>
     </div>
 
-    <div class="config">
+    <div class="result" v-if="result.resultStatus !== 'none'">
+      <div v-if="result.resultStatus === 'query'">
+        {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
+        <button @click="deleteFlaggedFiles" v-if="result.flaggedCount > 0">delete files</button>
+        <button @click="cancelResult" v-if="result.flaggedCount > 0">cancel</button>
+        <button @click="cancelResult" v-if="result.flaggedCount === 0">OK</button>
+      </div>
+      <div v-if="result.resultStatus === 'result'">
+        {{ result.deleteCount }} files deleted.
+        <button @click="cancelResult">OK</button>
+      </div>
+    </div>
+
+    <div class="config" v-else>
       <div class="container">
         <!-- Button to open file dialog -->
         <button
@@ -115,6 +128,7 @@
       </div>
     </div>
 
+
     <div class="output" v-if="logOutput">
       <!-- Log Section -->
       <div>
@@ -137,6 +151,13 @@ export default {
       directoryPath: null,
       processStatus: null,
       isProcessing: false,
+      result: {
+        totalCount: -1,
+        flaggedCount: -1,
+        deleteCount: -1,
+        resultStatus: 'none'
+
+      },
       currentTask: '',
       options: {
         minBrightnessCheck: false,
@@ -167,6 +188,13 @@ export default {
     },
   },
   methods: {
+    cancelResult() {
+      this.result.totalCount = -1;
+      this.result.flaggedCount = -1;
+      this.result.deleteCount = -1;
+      this.result.resultStatus = "none";
+    },
+
     logMessage(message) {
       if (this.logOutput) {
         this.logs.push(message);
@@ -201,6 +229,31 @@ export default {
       }
     },
 
+    async deleteFlaggedFiles() {
+      this.isProcessing = true;
+      try {
+        const result = await window.electronAPI.deleteFlaggedFiles();
+
+        if (result.success) {
+          this.result.resultStatus = "result"
+          console.log('whaaaa')
+          console.log(result)
+          this.result.deleteCount = result.deleteCount
+        } else {
+          this.processStatus = `Deletion failed: ${result.error}`;
+          this.logMessage(`Deletion failed: ${result.error}`);
+        }
+
+      } catch (error) {
+        console.error('Failed to delete images', error);
+        this.processStatus = 'An unexpected error occurred during deletion.';
+        this.logMessage('An unexpected error occurred during deletion.');
+      } finally {
+        this.currentTask = '';
+        this.isProcessing = false;
+      }
+    },
+
     async startProcessing() {
       if (!this.validateAllFields()) {
         this.logMessage("Validation failed. Please correct the errors before proceeding.");
@@ -227,8 +280,11 @@ export default {
         const result = await window.electronAPI.processImages(payload);
 
         if (result.success) {
-          this.processStatus = `Processed ${result.processedCount} images successfully.`;
-          this.logMessage(`Processed ${result.processedCount} images successfully.`);
+          this.result.flaggedCount = result.flaggedCount
+          this.result.totalCount = result.totalCount
+          this.result.resultStatus = "query"
+          this.processStatus = `Processed ${result.totalCount} images successfully.`;
+          this.logMessage(`Processed ${result.totalCount} images successfully.`);
         } else {
           this.processStatus = `Processing failed: ${result.error}`;
           this.logMessage(`Processing failed: ${result.error}`);

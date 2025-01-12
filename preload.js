@@ -39,6 +39,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Handle canceling the processing
   cancelProcessing: () => ipcRenderer.invoke('cancelProcessing'),
 
+  // Delete flagged files
+  deleteFlaggedFiles: () => ipcRenderer.invoke('deleteFlaggedFiles'),
+
   // Rename files and handle the events for renaming
   renameFiles: (directoryPath) => ipcRenderer.invoke('files:rename', directoryPath),
 });

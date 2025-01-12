@@ -13,6 +13,9 @@ let mainWindow;
 // Flag to track if processing should be canceled
 let cancelProcessingRequested = false;
 
+// Array containing files flagged for deletion
+let filesFlaggedForDeletion = [];
+
 // Check if the app is in development mode
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -38,7 +41,7 @@ app.on('ready', () => {
 
   // Open developer tools in development mode
   if (isDev) {
-    mainWindow.webContents.openDevTools();
+    //mainWindow.webContents.openDevTools();
   }
 });
 
@@ -60,8 +63,10 @@ ipcMain.handle('dialog:openDirectory', async () => {
 // Process Images Based on Brightness
 ipcMain.handle('processImages', async (event, payload) => {
   console.log("starting processing")
+  console.log("payload: ",payload)
   cancelProcessingRequested = false;
   const { directoryPath, options } = payload;
+  filesFlaggedForDeletion = []
 
   // Function to calculate brightness stats
   async function calculateBrightness(filePath) {
@@ -116,6 +121,10 @@ ipcMain.handle('processImages', async (event, payload) => {
         passed = false;
       }
 
+      if (!passed) {
+        filesFlaggedForDeletion.push(filePath)
+      }
+
       // Send feedback to the frontend
       const status = passed ? 'passed' : 'failed';
       event.sender.send('image-status', { file, status });
@@ -125,7 +134,7 @@ ipcMain.handle('processImages', async (event, payload) => {
       }
     }
 
-    return { success: true, passedCount, total: jpgFiles.length };
+    return { success: true, passedCount, totalCount: jpgFiles.length, flaggedCount: filesFlaggedForDeletion.length };
   } catch (error) {
     console.error('Error processing images:', error);
     return { success: false, error: error.message };
@@ -137,6 +146,25 @@ ipcMain.handle('cancelProcessing', () => {
   cancelProcessingRequested = true; // Set the flag to cancel processing
   console.log('Processing has been canceled.');
   return { success: true };
+});
+
+// Handle cancel processing request from frontend
+ipcMain.handle('deleteFlaggedFiles', async () => {
+  try {
+    let deleteCount = 0;
+
+    // Iterate through each file and delete it
+    for (let file of filesFlaggedForDeletion) {
+      await fs.promises.unlink(file); // Delete the file
+      deleteCount++;
+    }
+
+    // Return success with the count of deleted files
+    return { success: true, deleteCount };
+  } catch (error) {
+    console.error('Error deleting files:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 
