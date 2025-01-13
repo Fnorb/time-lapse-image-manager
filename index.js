@@ -15,6 +15,8 @@ let cancelProcessingRequested = false;
 
 // Array containing files flagged for deletion
 let filesFlaggedForDeletion = [];
+let lastImageBrightness = -1;
+let brightnessValues = [];
 
 // Check if the app is in development mode
 const isDev = process.env.NODE_ENV === 'development';
@@ -41,7 +43,7 @@ app.on('ready', () => {
 
   // Open developer tools in development mode
   if (isDev) {
-    //mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   }
 });
 
@@ -66,7 +68,8 @@ ipcMain.handle('processImages', async (event, payload) => {
   console.log("payload: ",payload)
   cancelProcessingRequested = false;
   const { directoryPath, options } = payload;
-  filesFlaggedForDeletion = []
+  filesFlaggedForDeletion = [];
+
 
   // Function to calculate brightness stats
   async function calculateBrightness(filePath) {
@@ -121,18 +124,33 @@ ipcMain.handle('processImages', async (event, payload) => {
         passed = false;
       }
 
-      if (!passed) {
+
+      /* if (passed && options.neighborDifference !== undefined && Math.abs(averageBrightness - lastImageBrightness) > options.neighborDifference) {
+        passed = false;
+      }*/ 
+
+      if (passed) {
+        brightnessValues.push(averageBrightness);
+        passedCount++
+      }
+      else {
+        brightnessValues.push(-1);
         filesFlaggedForDeletion.push(filePath)
       }
 
       // Send feedback to the frontend
       const status = passed ? 'passed' : 'failed';
       event.sender.send('image-status', { file, status });
-
-      if (passed) {
-        passedCount++;
-      }
     }
+
+    /* if (options.neighborDifference !== undefined) {
+      for (let brightnessValue of brightnessValues) {
+        if (passed && options.neighborDifference !== undefined && Math.abs(averageBrightness - lastImageBrightness) > options.neighborDifference) {
+          passed = false;
+        } 
+      }
+    } */
+    
 
     return { success: true, passedCount, totalCount: jpgFiles.length, flaggedCount: filesFlaggedForDeletion.length };
   } catch (error) {

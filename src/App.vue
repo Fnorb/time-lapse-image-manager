@@ -4,153 +4,170 @@
       <h1>TimeLapseTidy</h1>
     </div>
 
-    <div class="result" v-if="result.resultStatus !== 'none'">
-      <div v-if="result.resultStatus === 'query'">
-        {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
-        <button @click="deleteFlaggedFiles" v-if="result.flaggedCount > 0">delete files</button>
-        <button @click="cancelResult" v-if="result.flaggedCount > 0">cancel</button>
-        <button @click="cancelResult" v-if="result.flaggedCount === 0">OK</button>
-      </div>
-      <div v-if="result.resultStatus === 'result'">
-        {{ result.deleteCount }} files deleted.
-        <button @click="cancelResult">OK</button>
-      </div>
-    </div>
+    <div class="content">
+      <!-- CONFIG VIEW -->
 
-    <div class="config" v-else>
-      <div class="container">
-        <!-- Button to open file dialog -->
-        <button
-          class="btn btn-primary"
-          :disabled="isProcessing"
-          @click="pickDirectory"
-        >
-          Pick Source Directory
-        </button>
-        <span>{{ directoryPath }}</span>
+      <div class="config" v-if="status === 'config'">
+        <div class="container">
+          <!-- Button to open file dialog -->
+          <button
+            class="btn btn-primary"
+            :disabled="status === 'processing'"
+            @click="pickDirectory"
+          >
+            Pick Source Directory
+          </button>
+          <span>{{ directoryPath }}</span>
+  
+          <!-- Options Section -->
+          <div>
+            <h3>Options</h3>
+  
+            <!-- Minimum Brightness Option -->
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="minBrightnessOption"
+                v-model="options.minBrightnessCheck"
+                :disabled="status === 'processing'"
+              />
+              <label class="form-check-label" for="minBrightnessOption">
+                Remove images with brightness below
+              </label>
+              <input
+                type="number"
+                v-model="options.minBrightness"
+                :disabled="status === 'processing'"
+                @blur="validateField('minBrightness')"
+                class="form-control-inline"
+                :class="{ error: validationErrors.minBrightness }"
+              />
+              <span class="brightness-value">(0-100)</span>
+            </div>
+  
+            <!-- Maximum Brightness Option -->
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="maxBrightnessOption"
+                v-model="options.maxBrightnessCheck"
+                :disabled="status === 'processing'"
+              />
+              <label class="form-check-label" for="maxBrightnessOption">
+                Remove images with brightness above
+              </label>
+              <input
+                type="number"
+                v-model="options.maxBrightness"
+                :disabled="status === 'processing'"
+                @blur="validateField('maxBrightness')"
+                class="form-control-inline"
+                :class="{ error: validationErrors.maxBrightness }"
+              />
+              <span class="brightness-value">(0-100)</span>
+            </div>
+  
+            <!-- Difference from Neighbors Option -->
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="neighborDifferenceOption"
+                v-model="options.neighborDifferenceCheck"
+                :disabled="status === 'processing'"
+              />
+              <label class="form-check-label" for="neighborDifferenceOption">
+                Remove Images with Difference from Neighbors Above Value
+              </label>
+              <input
+                type="number"
+                v-model="options.neighborDifference"
+                :disabled="status === 'processing'"
+                @blur="validateField('neighborDifference')"
+                class="form-control-inline"
+                :class="{ error: validationErrors.neighborDifference }"
+              />
+              <span class="brightness-value">(0-100)</span>
+            </div>
+          </div>
+  
+          <!-- Start/Cancel Button -->
+  
+          <!-- Status of processing -->
+          <div v-if="processStatus">
+            <p>{{ processStatus }}</p>
+          </div>
+        </div>
+      </div>
 
-        <!-- Options Section -->
+      <!-- PROCESSING VIEW -->
+      <div class="processOutput" :class="{ show: status === 'processing' }">
+        <ProgressBar :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
+      </div>
+
+      <!-- RESULT VIEW -->
+      <div class="result" v-if="status === 'result'">
+        <div v-if="result.resultStatus === 'query'">
+          {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
+          <button @click="deleteFlaggedFiles" v-if="result.flaggedCount > 0">delete files</button>
+          <button @click="cancelResult" v-if="result.flaggedCount > 0">cancel</button>
+          <button @click="cancelResult" v-if="result.flaggedCount === 0">OK</button>
+        </div>
+        <div v-if="result.resultStatus === 'result'">
+          {{ result.deleteCount }} files deleted.
+          <button @click="cancelResult">OK</button>
+        </div>
+      </div>
+
+      <!-- LOG VIEW -->
+      <div class="output" v-if="status === 'log'">
         <div>
-          <h3>Options</h3>
-
-          <!-- Minimum Brightness Option -->
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="minBrightnessOption"
-              v-model="options.minBrightnessCheck"
-              :disabled="isProcessing"
-            />
-            <label class="form-check-label" for="minBrightnessOption">
-              Remove images with brightness below
-            </label>
-            <input
-              type="number"
-              v-model="options.minBrightness"
-              :disabled="isProcessing"
-              @blur="validateField('minBrightness')"
-              class="form-control-inline"
-              :class="{ error: validationErrors.minBrightness }"
-            />
-            <span class="brightness-value">(0-100)</span>
+          <h4>Log</h4>
+          <div class="log-container" ref="logContainer">
+            <p v-for="(log, index) in logs" :key="index" class="log-message">
+              {{ log }}
+            </p>
           </div>
-
-          <!-- Maximum Brightness Option -->
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="maxBrightnessOption"
-              v-model="options.maxBrightnessCheck"
-              :disabled="isProcessing"
-            />
-            <label class="form-check-label" for="maxBrightnessOption">
-              Remove images with brightness above
-            </label>
-            <input
-              type="number"
-              v-model="options.maxBrightness"
-              :disabled="isProcessing"
-              @blur="validateField('maxBrightness')"
-              class="form-control-inline"
-              :class="{ error: validationErrors.maxBrightness }"
-            />
-            <span class="brightness-value">(0-100)</span>
-          </div>
-
-          <!-- Difference from Neighbors Option -->
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="neighborDifferenceOption"
-              v-model="options.neighborDifferenceCheck"
-              :disabled="isProcessing"
-            />
-            <label class="form-check-label" for="neighborDifferenceOption">
-              Remove Images with Difference from Neighbors Above Value
-            </label>
-            <input
-              type="number"
-              v-model="options.neighborDifference"
-              :disabled="isProcessing"
-              @blur="validateField('neighborDifference')"
-              class="form-control-inline"
-              :class="{ error: validationErrors.neighborDifference }"
-            />
-            <span class="brightness-value">(0-100)</span>
-          </div>
-        </div>
-
-        <!-- Start/Cancel Button -->
-        <button
-          class="btn btn-success"
-          :disabled="!canStartProcessing"
-          @click="isProcessing ? cancelProcessing() : startProcessing()"
-        >
-          {{ isProcessing ? 'Cancel Processing' : 'Start Processing' }}
-        </button>
-
-        <!-- Rename Button -->
-        <button
-          class="btn btn-secondary"
-          :disabled="!directoryPath || isProcessing"
-          @click="startRenaming"
-        >
-          Rename Files
-        </button>
-
-        <!-- Status of processing -->
-        <div v-if="processStatus">
-          <p>{{ processStatus }}</p>
         </div>
       </div>
     </div>
 
+    <div class="footer">
+      <button
+        class="btn btn-success"
+        :disabled="!canStartProcessing"
+        @click="status === 'processing' ? cancelProcessing() : startProcessing()"
+      >
+        {{ status === 'processing' ? 'Cancel Processing' : 'Start Processing' }}
+      </button>
 
-    <div class="output" v-if="logOutput">
-      <!-- Log Section -->
-      <div>
-        <h4>Log</h4>
-        <div class="log-container" ref="logContainer">
-          <p v-for="(log, index) in logs" :key="index" class="log-message">
-            {{ log }}
-          </p>
-        </div>
-      </div>
+      <button
+        class="btn btn-secondary"
+        @click="startRenaming"
+        v-if="status === 'config'"
+      >
+        Rename Files
+      </button>
     </div>
   </div>
 </template>
 <script>
+import ProgressBar from './components/ProgressBar.vue';
+
 export default {
   name: 'App',
+  components: {
+    ProgressBar,
+  },
   data() {
     return {
       fileCount: null,
       directoryPath: null,
       processStatus: null,
-      isProcessing: false,
+      status: 'config',
+      imageStatuses: [],
       result: {
         totalCount: -1,
         flaggedCount: -1,
@@ -193,6 +210,7 @@ export default {
       this.result.flaggedCount = -1;
       this.result.deleteCount = -1;
       this.result.resultStatus = "none";
+      this.status = 'config';
     },
 
     logMessage(message) {
@@ -230,7 +248,7 @@ export default {
     },
 
     async deleteFlaggedFiles() {
-      this.isProcessing = true;
+      this.status = 'processing';
       try {
         const result = await window.electronAPI.deleteFlaggedFiles();
 
@@ -250,7 +268,7 @@ export default {
         this.logMessage('An unexpected error occurred during deletion.');
       } finally {
         this.currentTask = '';
-        this.isProcessing = false;
+        this.status = 'result';
       }
     },
 
@@ -260,7 +278,9 @@ export default {
         return;
       }
 
-      this.isProcessing = true;
+      console.log("fc: ", this.fileCount)
+      console.log(this.imageStatuses)
+      this.status = 'processing';
       this.processStatus = null;
       this.logMessage('Starting processing...');
       this.cancelProcessingRequested = false;  // Reset cancel flag
@@ -296,13 +316,13 @@ export default {
         this.logMessage('An unexpected error occurred during processing.');
       } finally {
         this.currentTask = '';
-        this.isProcessing = false;
+        this.status = 'result';
       }
     },
 
     cancelProcessing() {
       this.cancelProcessingRequested = true;
-      this.isProcessing = false;
+      this.status = 'config';
       this.processStatus = 'Processing has been canceled.';
       this.logMessage('Processing has been canceled.');
       window.electronAPI.cancelProcessing(); // Send cancel request to backend
@@ -330,7 +350,7 @@ export default {
     },
 
     async startRenaming() {
-      this.isProcessing = true;
+      this.status = 'processing';
       this.processStatus = null;
       this.logMessage('Starting renaming process...');
 
@@ -349,7 +369,7 @@ export default {
         this.processStatus = 'An unexpected error occurred during renaming.';
         this.logMessage('An unexpected error occurred during renaming.');
       } finally {
-        this.isProcessing = false;
+        this.status = 'result';
       }
     },
 
@@ -365,6 +385,7 @@ export default {
     onImageStatus(file, status) {
       this.logMessage(`Image: ${file} - Status: ${status}`);
       console.log(`Received status for ${file}: ${status}`); // Log directly to console
+      this.imageStatuses = [...this.imageStatuses, status];
     },
   },
   mounted() {
