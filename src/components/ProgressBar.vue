@@ -8,78 +8,142 @@
   export default {
     name: 'ProgressBar',
     props: {
-        imageStatuses: Array, // Accept the statuses array from the parent
-        imagesTotal: Number, // Accept the statuses array from the parent
+        imageStatuses: Array,
+        imageBrightnesses: Array,
+        imagesTotal: Number,
     },
     watch: {
         imageStatuses() {
-            console.log("IMAGE STATUS CHANGED")
-            this.drawProgressBar(); // Re-draw whenever the status changes
+            this.processNewData();
         },
     },
+    data() {
+        return {
+            canvas: null,
+            ctx: null,
+            listenersSet: false,
+            updateCanvas: true,
+            barData: [],
+            barWidth: 0,
+            huePassed: 120,
+            hueFailed: 0,
+            lastBarCount: -1,
+        }
+    },
     mounted() {
-        console.log("init progress")
-        console.log("imagecount: ", this.imagesTotal)
         const canvas = this.$refs.progressCanvas;
         const context = canvas.getContext("2d");
-
-        // Set the canvas resolution
-        const container = canvas.parentElement;
-        canvas.width = this.imagesTotal; // 1 pixel per image
-        canvas.height = container.offsetHeight; // Full container height
-        context.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Clear and prepare the canvas
-        context.fillStyle = "#cccccc"; // Grey for unprocessed
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        console.log("MOUNTED, DRAWING")
-        this.drawProgressBar(); // Draw initially
+        this.canvas = canvas;
+        this.ctx = context;
+        
+        if (!this.listenersSet) { window.addEventListener('resize', this.updateProgressBarDimensions); }
+        
+        this.updateProgressBarDimensions();
     },
 
     methods: {
-        drawProgressBar() {
-            const canvas = this.$refs.progressCanvas;
+        updateProgressBarDimensions() {
+            this.canvas.width = 0;
+            this.canvas.height = 0;
+            const container = this.canvas.parentElement;
+            const contentHeight = container.offsetHeight
+            const contentWidth = container.offsetWidth;
+            this.canvas.height = contentHeight;
+            this.canvas.width = contentWidth;
+        },
 
-            // Set the canvas resolution
-            const container = canvas.parentElement;
-            canvas.width = this.imagesTotal; // 1 pixel per image
-            canvas.height = container.offsetHeight - 80; // Full container height
+        processNewData() {
+            this.barData = [];
+            this.barWidth = this.canvas.width / this.imagesTotal;
+            let luminosity = 50;
 
-            const ctx = canvas.getContext('2d');
-            const rectHeight = canvas.height;
+            if (this.imagesTotal <= this.canvas.width) {
+                for (let i = 0; i <= this.imageStatuses.length; i++) {
+                    if (this.imageStatuses[i] === 'passed') {
+                        luminosity = 25 + (this.imageBrightnesses[i] / 2);
+                        this.barData.push(`hsl(${ this.huePassed }, 100%, ${ luminosity }%)`);
+                    } else if (this.imageStatuses[i] === 'failed') {
+                        luminosity = 25 + (this.imageBrightnesses[i] / 2);
+                        this.barData.push(`hsl(${ this.hueFailed }, 100%, ${ luminosity }%)`);
+                    }
+                }
 
-            let currentStatus = this.imageStatuses[0];
-            let currentLength = 1;
-            let xPos = 0;
+                this.drawProgressBar();
+            } else {
+                let barCounter = 0;
+                let barAverage = 0;
+                let brightnessAverage = [];
+                for (let i = 0; i <= this.imageStatuses.length; i++) {
+                    if (this.imageStatuses[i] === 'passed') {
+                        barAverage += 1;
+                        brightnessAverage.push(this.imageBrightnesses[i]);
+                    } else if (this.imageStatuses[i] === 'failed') {
+                        barAverage -= 1;
+                        brightnessAverage.push(this.imageBrightnesses[i]);
+                    }
+                    barCounter++;
 
-            for (let i = 1; i <= this.imageStatuses.length; i++) {
-                if (this.imageStatuses[i] === currentStatus) {
-                    currentLength++;
-                } else {
-                    ctx.fillStyle = this.getColorForStatus(currentStatus);
-                    ctx.fillRect(xPos, 0, currentLength, rectHeight);
-                    xPos += currentLength;
-                    currentStatus = this.imageStatuses[i];
-                    currentLength = 1;
+                    if (barCounter * this.barWidth > 1) {
+                        if (barAverage >= 0) {
+                            luminosity = 25 + ((brightnessAverage.reduce((acc, curr) => acc + curr, 0)) / brightnessAverage.length) / 2;
+                            this.barData.push(`hsl(${ this.huePassed }, 100%, ${ luminosity }%)`);
+                        } else {
+                            luminosity = 25 + ((brightnessAverage.reduce((acc, curr) => acc + curr, 0)) / brightnessAverage.length) / 2;
+                            this.barData.push(`hsl(${ this.hueFailed }, 100%, ${ luminosity }%)`);
+                        }
+
+                        barCounter = 0;
+                        barAverage = 0;
+                        brightnessAverage = [];
+                    } 
+                }
+
+                if (this.barData.length > this.lastBarCount) {
+                    this.lastBarCount = this.barData.length;
+                    this.drawProgressBar();
                 }
             }
+        },
 
-            // Add highlight rectangle
-            this.addHighlight(ctx, xPos, canvas.width, rectHeight);
+        drawProgressBar() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = "#444c"; 
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            let barWidth = this.barWidth;
+
+            if (this.imagesTotal > this.canvas.width) { barWidth = 1; }
+
+            for (let i = 0; i <= this.barData.length; i++) {
+                this.ctx.fillStyle = this.barData[i];
+                this.ctx.fillRect(barWidth * i, 0, barWidth, this.canvas.height);
+            }
+
+            this.addHighlight(this.ctx, barWidth * this.barData.length, this.canvas.width, this.canvas.height);
         },
 
         addHighlight(ctx, xPos, canvasWidth, rectHeight) {
-            // Light-up rectangle
             const highlightWidth = Math.floor(canvasWidth * 0.05);
-            const gradientLight = ctx.createLinearGradient(xPos - highlightWidth, 0, xPos, 0);
-            gradientLight.addColorStop(0, 'rgba(255, 255, 255, 0)');
-            gradientLight.addColorStop(1, 'rgba(255, 255, 255, .3)');
-            ctx.fillStyle = gradientLight;
-            ctx.fillRect(Math.max(0, xPos - highlightWidth), 0, highlightWidth, rectHeight);
 
-            // Shadow rectangle
-            const gradientShadow = ctx.createLinearGradient(xPos, 0, xPos + highlightWidth / 3, 0);
+            const visibleStart = Math.max(0, xPos - highlightWidth);
+            const visibleWidth = highlightWidth - (visibleStart - (xPos - highlightWidth));
+
+            const gradientLight = ctx.createLinearGradient(
+                xPos - highlightWidth,
+                0,
+                xPos,
+                0
+            );
+            gradientLight.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            gradientLight.addColorStop(1, 'rgba(255, 255, 255, .5)');
+            ctx.fillStyle = gradientLight;
+            ctx.fillRect(visibleStart, 0, visibleWidth, rectHeight);
+
+            const gradientShadow = ctx.createLinearGradient(
+                xPos,
+                0,
+                xPos + highlightWidth / 3,
+                0
+            );
             gradientShadow.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
             gradientShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = gradientShadow;
@@ -108,8 +172,6 @@
     height 100%
   
   canvas
-    display block
-    height 100%
-    width 100%
     background-color #444444
+    height 100%
   </style>

@@ -93,8 +93,6 @@
             </div>
           </div>
   
-          <!-- Start/Cancel Button -->
-  
           <!-- Status of processing -->
           <div v-if="processStatus">
             <p>{{ processStatus }}</p>
@@ -103,21 +101,23 @@
       </div>
 
       <!-- PROCESSING VIEW -->
-      <div class="processOutput" :class="{ show: status === 'processing' }">
-        <ProgressBar :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
+      <div class="processOutput" v-if="status === 'processing'">
+        <ProgressBar :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
+      </div>
+
+      <!-- ERROR VIEW -->
+      <div class="processError" v-if="status === 'error'">
+        <div>ERROR: {{ error.message }}</div>
+        <div v-if="error.filename !== ''">FILE: {{ error.filename }}</div>
       </div>
 
       <!-- RESULT VIEW -->
       <div class="result" v-if="status === 'result'">
         <div v-if="result.resultStatus === 'query'">
           {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
-          <button @click="deleteFlaggedFiles" v-if="result.flaggedCount > 0">delete files</button>
-          <button @click="cancelResult" v-if="result.flaggedCount > 0">cancel</button>
-          <button @click="cancelResult" v-if="result.flaggedCount === 0">OK</button>
         </div>
         <div v-if="result.resultStatus === 'result'">
           {{ result.deleteCount }} files deleted.
-          <button @click="cancelResult">OK</button>
         </div>
       </div>
 
@@ -136,19 +136,20 @@
 
     <div class="footer">
       <button
-        class="btn btn-success"
-        :disabled="!canStartProcessing"
-        @click="status === 'processing' ? cancelProcessing() : startProcessing()"
-      >
-        {{ status === 'processing' ? 'Cancel Processing' : 'Start Processing' }}
+        class="btn"
+        v-if="getFooterButtonLabel('left') !== ''" 
+        :disabled="getFooterButtonDisabled('left')" 
+        v-text="getFooterButtonLabel('left')"
+        @click="handleFooterButtonClick('left')"
+        >
       </button>
 
       <button
-        class="btn btn-secondary"
-        @click="startRenaming"
-        v-if="status === 'config'"
-      >
-        Rename Files
+        class="btn" 
+        v-if="getFooterButtonLabel('right') !== ''" 
+        v-text="getFooterButtonLabel('right')"
+        @click="handleFooterButtonClick('right')"
+        >
       </button>
     </div>
   </div>
@@ -168,6 +169,11 @@ export default {
       processStatus: null,
       status: 'config',
       imageStatuses: [],
+      imageBrightnesses: [],
+      error: {
+        message: '',
+        filename: '',
+      },
       result: {
         totalCount: -1,
         flaggedCount: -1,
@@ -191,13 +197,13 @@ export default {
       },
       logOutput: false,
       logs: [],
-      cancelProcessingRequested: false,  // Track if cancel was requested
+      cancelProcessingRequested: false,
     };
   },
   computed: {
     canStartProcessing() {
       return (
-        this.directoryPath && // Ensure a directory is selected
+        this.directoryPath &&
         (this.options.minBrightnessCheck || 
         this.options.maxBrightnessCheck || 
         this.options.neighborDifferenceCheck)
@@ -205,6 +211,56 @@ export default {
     },
   },
   methods: {
+    getFooterButtonLabel(button) {
+      const labels = {
+        left: {
+          config: "Start",
+          processing: "Cancel",
+          error: "OK",
+          result: "Delete files",
+        },
+        right: {
+          config: "Rename files",
+          result: "Cancel",
+        },
+      };
+
+      return labels[button]?.[this.status] || '';
+    },
+
+    getFooterButtonDisabled() {
+      return (
+        (this.status === 'config' && !this.canStartProcessing) || 
+        (this.status === 'result' && this.result.flaggedCount === 0)
+      );
+    },
+
+    handleFooterButtonClick(button) {
+      switch (this.status) {
+        case 'config':
+          if (button === 'left') { this.startProcessing(); }
+          else if (button === 'right') { this.startRenaming(); }
+          break;
+
+        case 'processing':
+        case 'error':
+          if (button === 'left') { 
+            this.cancelResult();
+            this.cancelProcessing();
+          }
+          break;
+
+        case 'result':
+          if (button === 'left') { this.deleteFlaggedFiles(); } 
+          else if (button === 'right') { this.cancelResult(); }
+          break;
+
+        default:
+          console.warn('Unexpected status:', this.status);
+          break;
+      }
+    },
+
     cancelResult() {
       this.result.totalCount = -1;
       this.result.flaggedCount = -1;
@@ -254,16 +310,16 @@ export default {
 
         if (result.success) {
           this.result.resultStatus = "result"
-          console.log('whaaaa')
-          console.log(result)
           this.result.deleteCount = result.deleteCount
         } else {
           this.processStatus = `Deletion failed: ${result.error}`;
           this.logMessage(`Deletion failed: ${result.error}`);
+          this.error.message = result.error;
+          this.error.filename = result.filename;
+          this.status = "error";
         }
 
       } catch (error) {
-        console.error('Failed to delete images', error);
         this.processStatus = 'An unexpected error occurred during deletion.';
         this.logMessage('An unexpected error occurred during deletion.');
       } finally {
@@ -278,12 +334,11 @@ export default {
         return;
       }
 
-      console.log("fc: ", this.fileCount)
-      console.log(this.imageStatuses)
+      this.imageStatuses = [];
       this.status = 'processing';
       this.processStatus = null;
       this.logMessage('Starting processing...');
-      this.cancelProcessingRequested = false;  // Reset cancel flag
+      this.cancelProcessingRequested = false;
 
       const payload = {
         directoryPath: this.directoryPath,
@@ -293,6 +348,8 @@ export default {
           neighborDifference: this.options.neighborDifferenceCheck ? this.options.neighborDifference : undefined,
         },
       };
+
+      let processOutcome = 'byProcessCompleted';
 
       try {
         this.currentTask = 'Processing Images...';
@@ -308,24 +365,40 @@ export default {
         } else {
           this.processStatus = `Processing failed: ${result.error}`;
           this.logMessage(`Processing failed: ${result.error}`);
+          this.error.message = result.error;
+          this.error.filename = result.filename;
+          this.status = "error";
+          processOutcome = 'byError'; 
         }
 
       } catch (error) {
-        console.error('Failed to process images', error);
         this.processStatus = 'An unexpected error occurred during processing.';
         this.logMessage('An unexpected error occurred during processing.');
+        processOutcome = 'byError';
       } finally {
         this.currentTask = '';
         this.status = 'result';
+
+        if (processOutcome === 'byProcessCompleted') {
+          console.log('Process completed successfully!');
+        } else if (processOutcome === 'byError') {
+          console.log('An error occurred during processing.');
+          this.status = 'error';
+        }
+
+        if (this.cancelProcessingRequested) {
+          processOutcome = 'byUserCancel';
+          this.status = 'config';
+          console.log('Processing was canceled by the user.');
+        }
       }
     },
 
     cancelProcessing() {
       this.cancelProcessingRequested = true;
-      this.status = 'config';
       this.processStatus = 'Processing has been canceled.';
       this.logMessage('Processing has been canceled.');
-      window.electronAPI.cancelProcessing(); // Send cancel request to backend
+      window.electronAPI.cancelProcessing(); 
     },
 
     validateAllFields() {
@@ -381,15 +454,14 @@ export default {
       }
     },
 
-    // Method to handle image status updates
-    onImageStatus(file, status) {
+    onImageStatus(file, status, averageBrightess) {
       this.logMessage(`Image: ${file} - Status: ${status}`);
-      console.log(`Received status for ${file}: ${status}`); // Log directly to console
       this.imageStatuses = [...this.imageStatuses, status];
+      this.imageBrightnesses = [...this.imageBrightnesses, averageBrightess];
     },
   },
   mounted() {
-    window.electronAPI.onImageStatus(this.onImageStatus); // Ensure callback is properly set
+    window.electronAPI.onImageStatus(this.onImageStatus);
   },
   beforeUnmount() {
     window.electronAPI.removeImageStatusListener();
