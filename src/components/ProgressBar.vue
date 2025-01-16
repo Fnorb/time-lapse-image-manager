@@ -1,6 +1,7 @@
 <template>
     <div class="progress-bar-container">
       <canvas ref="progressCanvas"></canvas>
+      <div class="display" v-if="showDisplay">{{ imageStatuses.length }} / {{ imagesTotal }}</div>
     </div>
   </template>
   
@@ -11,6 +12,10 @@
         imageStatuses: Array,
         imageBrightnesses: Array,
         imagesTotal: Number,
+        showDisplay: {
+            type: Boolean,
+            default: true,
+        }
     },
     watch: {
         imageStatuses() {
@@ -28,6 +33,7 @@
             huePassed: 120,
             hueFailed: 0,
             lastBarCount: -1,
+            luminosityRange: 50,
         }
     },
     mounted() {
@@ -60,10 +66,11 @@
             if (this.imagesTotal <= this.canvas.width) {
                 for (let i = 0; i <= this.imageStatuses.length; i++) {
                     if (this.imageStatuses[i] === 'passed') {
-                        luminosity = 25 + (this.imageBrightnesses[i] / 2);
+                        luminosity = 50 - (this.luminosityRange / 2) + ((this.imageBrightnesses[i] / 100) * this.luminosityRange);
                         this.barData.push(`hsl(${ this.huePassed }, 100%, ${ luminosity }%)`);
+                        console.log(this.imageBrightnesses[i], " -> ", `hsl(${ this.huePassed }, 100%, ${ luminosity }%)`)
                     } else if (this.imageStatuses[i] === 'failed') {
-                        luminosity = 25 + (this.imageBrightnesses[i] / 2);
+                        luminosity = 50 - (this.luminosityRange / 2) + ((this.imageBrightnesses[i] / 100) * this.luminosityRange);
                         this.barData.push(`hsl(${ this.hueFailed }, 100%, ${ luminosity }%)`);
                     }
                 }
@@ -85,10 +92,10 @@
 
                     if (barCounter * this.barWidth > 1) {
                         if (barAverage >= 0) {
-                            luminosity = 25 + ((brightnessAverage.reduce((acc, curr) => acc + curr, 0)) / brightnessAverage.length) / 2;
+                            luminosity = 50 - (this.luminosityRange / 2) + (brightnessAverage.reduce((acc, curr) => acc + curr, 0) / brightnessAverage.length) * (this.luminosityRange / 100);
                             this.barData.push(`hsl(${ this.huePassed }, 100%, ${ luminosity }%)`);
                         } else {
-                            luminosity = 25 + ((brightnessAverage.reduce((acc, curr) => acc + curr, 0)) / brightnessAverage.length) / 2;
+                            luminosity = 50 - (this.luminosityRange / 2) + (brightnessAverage.reduce((acc, curr) => acc + curr, 0) / brightnessAverage.length) * (this.luminosityRange / 100);
                             this.barData.push(`hsl(${ this.hueFailed }, 100%, ${ luminosity }%)`);
                         }
 
@@ -113,9 +120,12 @@
 
             if (this.imagesTotal > this.canvas.width) { barWidth = 1; }
 
-            for (let i = 0; i <= this.barData.length; i++) {
+            for (let i = 0; i < this.barData.length; i++) {
                 this.ctx.fillStyle = this.barData[i];
-                this.ctx.fillRect(barWidth * i, 0, barWidth, this.canvas.height);
+                this.ctx.fillRect(Math.ceil(barWidth * i), 0, Math.ceil(barWidth), this.canvas.height);
+                if (this.imagesTotal === this.imageBrightnesses.length) {
+                    console.log("drawing rect at: ", barWidth * i, 0, barWidth, this.canvas.height, ' with: ', i, this.barData[i])
+                }
             }
 
             this.addHighlight(this.ctx, barWidth * this.barData.length, this.canvas.width, this.canvas.height);
@@ -149,19 +159,6 @@
             ctx.fillStyle = gradientShadow;
             ctx.fillRect(xPos, 0, highlightWidth / 3, rectHeight);
         },
-
-        getColorForStatus(status) {
-        switch (status) {
-            case 'passed':
-            return 'green';
-            case 'failed':
-            return 'red';
-            case 'unprocessed':
-            return 'grey';
-            default:
-            return 'grey';
-        }
-        },
     },
   };
   </script>
@@ -170,8 +167,18 @@
   .progress-bar-container
     width 100%
     height 100%
+    position relative
   
-  canvas
-    background-color #444444
-    height 100%
+    canvas
+        background-color #444444
+        height 100%
+
+    .display
+        position absolute
+        border-radius 10px
+        top 20px
+        right 20px
+        background-color rgba(0, 0, 0, 0.5)
+        color #ffffff
+        padding 5px 30px 5px 30px
   </style>

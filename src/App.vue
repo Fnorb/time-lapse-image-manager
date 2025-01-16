@@ -101,7 +101,7 @@
       </div>
 
       <!-- PROCESSING VIEW -->
-      <div class="processOutput" v-if="status === 'processing'">
+      <div class="processOutput" v-if="status === 'processing' || status === 'result'">
         <ProgressBar :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
       </div>
 
@@ -112,7 +112,7 @@
       </div>
 
       <!-- RESULT VIEW -->
-      <div class="result" v-if="status === 'result'">
+      <div class="result" v-if="status === 'result' && false">
         <div v-if="result.resultStatus === 'query'">
           {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
         </div>
