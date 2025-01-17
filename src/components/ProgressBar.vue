@@ -1,9 +1,13 @@
 <template>
     <div class="progress-bar-container">
-      <canvas ref="progressCanvas"></canvas>
-      <div class="display" v-if="showDisplay">{{ imageStatuses.length }} / {{ imagesTotal }}</div>
+        <canvas ref="progressCanvas"></canvas>
+        <div class="display" v-if="showDisplay">
+            <div>Processed: {{ imageStatuses.length }} / {{ imagesTotal }}</div>
+            <div>Passed: <span class="passed">{{ passedCount }}</span></div>
+            <div>Failed: <span class="failed">{{ failedCount }}</span></div>
+        </div>
     </div>
-  </template>
+</template>
   
   <script>
   export default {
@@ -32,6 +36,8 @@
             barWidth: 0,
             huePassed: 120,
             hueFailed: 0,
+            failedCount: -1,
+            passedCount: -1,
             lastBarCount: -1,
             luminosityRange: 50,
         }
@@ -42,13 +48,23 @@
         this.canvas = canvas;
         this.ctx = context;
         
-        if (!this.listenersSet) { window.addEventListener('resize', this.updateProgressBarDimensions); }
+        if (!this.listenersSet) {
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer); 
+            resizeTimer = setTimeout(() => {
+                this.updateProgressBarDimensions();
+            }, 200); 
+        });
+        this.listenersSet = true; 
+    }
         
         this.updateProgressBarDimensions();
     },
 
     methods: {
         updateProgressBarDimensions() {
+            console.log("updating dms")
             this.canvas.width = 0;
             this.canvas.height = 0;
             const container = this.canvas.parentElement;
@@ -56,9 +72,12 @@
             const contentWidth = container.offsetWidth;
             this.canvas.height = contentHeight;
             this.canvas.width = contentWidth;
+            console.log("canvas: ", this.canvas.width, this.canvas.height)
         },
 
         processNewData() {
+            this.passedCount = 0;
+            this.failedCount = 0;
             this.barData = [];
             this.barWidth = this.canvas.width / this.imagesTotal;
             let luminosity = 50;
@@ -66,10 +85,11 @@
             if (this.imagesTotal <= this.canvas.width) {
                 for (let i = 0; i <= this.imageStatuses.length; i++) {
                     if (this.imageStatuses[i] === 'passed') {
+                        this.passedCount++;
                         luminosity = 50 - (this.luminosityRange / 2) + ((this.imageBrightnesses[i] / 100) * this.luminosityRange);
                         this.barData.push(`hsl(${ this.huePassed }, 100%, ${ luminosity }%)`);
-                        console.log(this.imageBrightnesses[i], " -> ", `hsl(${ this.huePassed }, 100%, ${ luminosity }%)`)
                     } else if (this.imageStatuses[i] === 'failed') {
+                        this.failedCount++;
                         luminosity = 50 - (this.luminosityRange / 2) + ((this.imageBrightnesses[i] / 100) * this.luminosityRange);
                         this.barData.push(`hsl(${ this.hueFailed }, 100%, ${ luminosity }%)`);
                     }
@@ -77,20 +97,22 @@
 
                 this.drawProgressBar();
             } else {
-                let barCounter = 0;
                 let barAverage = 0;
+                let barSum = 0;
                 let brightnessAverage = [];
                 for (let i = 0; i <= this.imageStatuses.length; i++) {
                     if (this.imageStatuses[i] === 'passed') {
+                        this.passedCount++;
                         barAverage += 1;
                         brightnessAverage.push(this.imageBrightnesses[i]);
                     } else if (this.imageStatuses[i] === 'failed') {
+                        this.failedCount++;
                         barAverage -= 1;
                         brightnessAverage.push(this.imageBrightnesses[i]);
                     }
-                    barCounter++;
+                    barSum += this.barWidth;
 
-                    if (barCounter * this.barWidth > 1) {
+                    if (barSum >= 1) {
                         if (barAverage >= 0) {
                             luminosity = 50 - (this.luminosityRange / 2) + (brightnessAverage.reduce((acc, curr) => acc + curr, 0) / brightnessAverage.length) * (this.luminosityRange / 100);
                             this.barData.push(`hsl(${ this.huePassed }, 100%, ${ luminosity }%)`);
@@ -99,8 +121,8 @@
                             this.barData.push(`hsl(${ this.hueFailed }, 100%, ${ luminosity }%)`);
                         }
 
-                        barCounter = 0;
                         barAverage = 0;
+                        barSum--;
                         brightnessAverage = [];
                     } 
                 }
@@ -123,9 +145,9 @@
             for (let i = 0; i < this.barData.length; i++) {
                 this.ctx.fillStyle = this.barData[i];
                 this.ctx.fillRect(Math.ceil(barWidth * i), 0, Math.ceil(barWidth), this.canvas.height);
-                if (this.imagesTotal === this.imageBrightnesses.length) {
-                    console.log("drawing rect at: ", barWidth * i, 0, barWidth, this.canvas.height, ' with: ', i, this.barData[i])
-                }
+                //if (this.imagesTotal === this.imageBrightnesses.length) {
+                    console.log("barWidth: ", barWidth, " canvas width: ", this.canvas.width, " data: ", this.barData.length, " rect: ", barWidth * i, 0, barWidth, this.canvas.height, ' with: ', i, this.barData[i])
+                //}
             }
 
             this.addHighlight(this.ctx, barWidth * this.barData.length, this.canvas.width, this.canvas.height);
@@ -181,4 +203,9 @@
         background-color rgba(0, 0, 0, 0.5)
         color #ffffff
         padding 5px 30px 5px 30px
+
+        .passed
+            color rgb(0, 200, 0)
+        .failed
+            color rgb(200, 0, 0)
   </style>
