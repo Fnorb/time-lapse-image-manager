@@ -16,5 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteFlaggedFiles: () => ipcRenderer.invoke('deleteFlaggedFiles'),
 
   renameFiles: (directoryPath) => ipcRenderer.invoke('files:rename', directoryPath),
+
+  getFileCount: (directoryPath) => ipcRenderer.invoke('files:getFileCount', directoryPath),
 });
 

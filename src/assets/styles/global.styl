@@ -3,11 +3,62 @@ colorBlack = #000000
 colorDarkBlue = #0B192C
 colorlightBlue = #1E3E62
 colorOrange = #FF6500
+buttonGap = 5px
 
 html, body, #app, .app-container
   height 100%
   background-color colorlightBlue
   overflow hidden
+
+.text-output
+  color #333
+  font-family 'Arial', sans-serif
+  font-size 12px
+  font-weight 400
+  background-color #ffffff
+  padding 8px 12px
+  border 1px solid #cccccc
+  height 10px
+  white-space nowrap
+  overflow hidden
+  text-overflow ellipsis
+  max-width 300px
+  box-shadow 0 2px 4px rgba(0, 0, 0, 0.1)
+
+  &.path
+    direction rtl
+
+button
+  background-color: #4a90e2
+  color: #ffffff
+  font-family: 'Arial', sans-serif
+  font-size: 16px
+  font-weight: 600
+  padding: 12px 20px
+  border: none
+  border-radius: 6px
+  cursor: pointer
+  transition: all 0.3s ease
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1)
+
+  // On hover
+  &:hover
+    background-color: #357ab8
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15)
+    transform: translateY(-2px)
+
+  // On active click
+  &:active
+    background-color: #2e5c91
+    transform: translateY(0)
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1)
+
+  // Disabled button
+  &:disabled
+    background-color: #cccccc
+    color: #888888
+    cursor: not-allowed
+    box-shadow: none
 
 .app-container
   display flex
@@ -27,6 +78,16 @@ html, body, #app, .app-container
 .content
   height 100%
   background-color #f4f4f4
+  position relative
+
+  .result
+    position absolute
+    border-radius 10px
+    top 20px
+    left 20px
+    background-color rgba(0, 0, 0, 0.5)
+    color #ffffff
+    padding 5px 30px 5px 30px
 
   .processError
     box-shadow 0px 0px 25px 25px rgba(255, 0, 0, 0.2) inset, 0px 0px 5px 5px rgba(255, 0, 0, 0.5) inset
@@ -43,8 +104,17 @@ html, body, #app, .app-container
     height 100%
 
 .footer
-  height 80px
   background-color colorlightBlue
+  display flex
+  flex-direction column
+  row-gap buttonGap
+  padding buttonGap * 2
+
+  .selectButton
+  .actionButtons
+    display flex
+    gap buttonGap
+    align-items center
 
 h1
   margin 0

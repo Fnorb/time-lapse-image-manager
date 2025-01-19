@@ -40,6 +40,21 @@ app.on('ready', () => {
   }
 });
 
+ipcMain.handle('files:getFileCount', async (event, directoryPath) => {
+    const outputExtension = '.jpg';
+  
+    try {
+      const files = await readdirAsync(directoryPath);
+      const jpgFiles = files.filter(file => file.endsWith(outputExtension));
+      const fileCount = jpgFiles.length;
+      return { success: true, fileCount };
+    } catch (error) {
+      console.error('Error getting files:', error);
+      event.sender.send('getting-failed', `Getting files failed: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  });
+
 ipcMain.handle('dialog:openDirectory', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory']

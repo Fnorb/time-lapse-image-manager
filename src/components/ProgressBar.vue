@@ -64,7 +64,6 @@
 
     methods: {
         updateProgressBarDimensions() {
-            console.log("updating dms")
             this.canvas.width = 0;
             this.canvas.height = 0;
             const container = this.canvas.parentElement;
@@ -72,7 +71,6 @@
             const contentWidth = container.offsetWidth;
             this.canvas.height = contentHeight;
             this.canvas.width = contentWidth;
-            console.log("canvas: ", this.canvas.width, this.canvas.height)
         },
 
         processNewData() {
@@ -145,9 +143,9 @@
             for (let i = 0; i < this.barData.length; i++) {
                 this.ctx.fillStyle = this.barData[i];
                 this.ctx.fillRect(Math.ceil(barWidth * i), 0, Math.ceil(barWidth), this.canvas.height);
-                //if (this.imagesTotal === this.imageBrightnesses.length) {
-                    console.log("barWidth: ", barWidth, " canvas width: ", this.canvas.width, " data: ", this.barData.length, " rect: ", barWidth * i, 0, barWidth, this.canvas.height, ' with: ', i, this.barData[i])
-                //}
+                if (this.imagesTotal === this.imageBrightnesses.length) {
+                    // console.log("barWidth: ", barWidth, " canvas width: ", this.canvas.width, " data: ", this.barData.length, " rect: ", barWidth * i, 0, barWidth, this.canvas.height, ' with: ', i, this.barData[i])
+                }
             }
 
             this.addHighlight(this.ctx, barWidth * this.barData.length, this.canvas.width, this.canvas.height);

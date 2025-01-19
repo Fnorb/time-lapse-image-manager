@@ -4,21 +4,39 @@
       <h1>TimeLapseTidy</h1>
     </div>
 
+    <div class="footer">
+      <div class="selectButton" v-if="status === 'config'">
+        <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
+        <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
+        <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
+      </div>
+
+      <div class="actionButtons">
+        <button
+        class="btn"
+        v-if="getFooterButtonLabel('left') !== ''" 
+        :disabled="getFooterButtonDisabled('left')" 
+        v-text="getFooterButtonLabel('left')"
+        @click="handleFooterButtonClick('left')"
+        >
+      </button>
+
+      <button
+        class="btn" 
+        :disabled="getFooterButtonDisabled('right')" 
+        v-if="getFooterButtonLabel('right') !== ''" 
+        v-text="getFooterButtonLabel('right')"
+        @click="handleFooterButtonClick('right')"
+        >
+      </button>
+      </div>      
+    </div>
+
     <div class="content">
       <!-- CONFIG VIEW -->
 
       <div class="config" v-if="status === 'config'">
         <div class="container">
-          <!-- Button to open file dialog -->
-          <button
-            class="btn btn-primary"
-            :disabled="status === 'processing'"
-            @click="pickDirectory"
-          >
-            Pick Source Directory
-          </button>
-          <span>{{ directoryPath }}</span>
-  
           <!-- Options Section -->
           <div>
             <h3>Options</h3>
@@ -112,7 +130,7 @@
       </div>
 
       <!-- RESULT VIEW -->
-      <div class="result" v-if="status === 'result' && false">
+      <div class="result" v-if="status === 'result'">
         <div v-if="result.resultStatus === 'query'">
           {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
         </div>
@@ -132,25 +150,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="footer">
-      <button
-        class="btn"
-        v-if="getFooterButtonLabel('left') !== ''" 
-        :disabled="getFooterButtonDisabled('left')" 
-        v-text="getFooterButtonLabel('left')"
-        @click="handleFooterButtonClick('left')"
-        >
-      </button>
-
-      <button
-        class="btn" 
-        v-if="getFooterButtonLabel('right') !== ''" 
-        v-text="getFooterButtonLabel('right')"
-        @click="handleFooterButtonClick('right')"
-        >
-      </button>
     </div>
   </div>
 </template>
@@ -218,6 +217,7 @@ export default {
           processing: "Cancel",
           error: "OK",
           result: "Delete files",
+          resultOK: "OK",
         },
         right: {
           config: "Rename files",
@@ -225,13 +225,23 @@ export default {
         },
       };
 
+      if (this.status === 'result' && this.result.resultStatus === 'result') {
+        if (button === 'left') {
+          return labels.left.resultOK;
+        }
+        if (button === 'right') {
+          return '';
+        }
+      }
+
       return labels[button]?.[this.status] || '';
     },
 
-    getFooterButtonDisabled() {
+    getFooterButtonDisabled(button) {
       return (
-        (this.status === 'config' && !this.canStartProcessing) || 
-        (this.status === 'result' && this.result.flaggedCount === 0)
+        (button === 'right' && !this.directoryPath) ||
+        (button === 'left' && this.status === 'config' && !this.canStartProcessing) || 
+        (button === 'left' && this.status === 'result' && this.result.flaggedCount === 0)
       );
     },
 
@@ -251,8 +261,18 @@ export default {
           break;
 
         case 'result':
-          if (button === 'left') { this.deleteFlaggedFiles(); } 
-          else if (button === 'right') { this.cancelResult(); }
+          if (this.result.resultStatus === 'result') {
+            if (button === 'left') {
+              this.cancelResult(); // Execute cancelResult for left button when resultStatus === 'result'
+            }
+          } else {
+            if (button === 'left') {
+              this.deleteFlaggedFiles(); // Default behavior for 'result' status without 'resultStatus === result'
+            } 
+            else if (button === 'right') { 
+              this.cancelResult(); 
+            }
+          }
           break;
 
         default:
@@ -267,6 +287,22 @@ export default {
       this.result.deleteCount = -1;
       this.result.resultStatus = "none";
       this.status = 'config';
+      this.updateFileCount();
+    },
+
+    async updateFileCount() {
+      try {
+        if (this.directoryPath) {
+          // Call your method to count files in the directory (you need to implement this on the backend side)
+          const fileCount = await window.electronAPI.getFileCount(this.directoryPath);
+          console.log(fileCount)
+          this.fileCount = fileCount.fileCount;
+        } else {
+          console.warn("Directory path not available.");
+        }
+      } catch (error) {
+        console.error('Failed to update file count:', error);
+      }
     },
 
     logMessage(message) {
@@ -324,7 +360,7 @@ export default {
         this.logMessage('An unexpected error occurred during deletion.');
       } finally {
         this.currentTask = '';
-        this.status = 'result';
+        this.status = "result";
       }
     },
 
@@ -377,6 +413,7 @@ export default {
         processOutcome = 'byError';
       } finally {
         this.currentTask = '';
+        console.log("status is result")
         this.status = 'result';
 
         if (processOutcome === 'byProcessCompleted') {
