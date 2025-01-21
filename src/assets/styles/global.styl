@@ -87,10 +87,11 @@ button
 
 .content
   height 100%
-  background-color #f4f4f4
+  background-color #colorDarkBlue
   position relative
 
   .result
+  .confirmation
     position absolute
     border-radius 10px
     top 20px
@@ -114,21 +115,29 @@ button
     height 100%
 
 .footer
-  background-color colorlightBlue
-  display flex
-  flex-direction column
+  display grid
+  grid-template-areas "select headline" "actions actions"
+  grid-template-columns auto min-content
+  grid-template-rows auto
+  box-shadow 0px 30px 20px 10px rgba(0, 0, 0, 0.1), 0px 10px 10px 0px rgba(0, 0, 0, 0.2)
+  background-color colorDarkBlue
   row-gap buttonGap
   padding buttonGap * 2
 
   .selectButton
   .actionButtons
+    grid-area select
     display flex
     gap buttonGap
     align-items center
+    &.actionButtons
+      grid-area actions
 
-h1
-  margin 0
-  font-size 2rem
+  h1
+    grid-area headline
+    margin 0
+    font-size 2rem
+    color #ffffff
 
 .config
   grid-area config

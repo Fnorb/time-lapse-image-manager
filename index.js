@@ -70,7 +70,6 @@ ipcMain.handle('dialog:openDirectory', async () => {
 });
 
 ipcMain.handle('processImages', async (event, payload) => {
-  console.log("START PROCESSING");
   cancelProcessingRequested = false;
   const { directoryPath, options } = payload;
   filesFlaggedForDeletion = [];
@@ -169,7 +168,6 @@ ipcMain.handle('deleteFlaggedFiles', async () => {
 });
 
 ipcMain.handle('files:deleteHalf', async (event, directoryPath) => {
-  console.log("deleting half backend")
   try {
     const files = await readdirAsync(directoryPath);
     const jpgFiles = files.filter(file => file.endsWith('.jpg')); // Ensure correct extension handling

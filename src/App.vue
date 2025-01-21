@@ -1,9 +1,5 @@
 <template>
   <div class="app-container">
-    <div class="header">
-      <h1>TimeLapseTidy</h1>
-    </div>
-
     <div class="footer">
       <div class="selectButton" v-if="status === 'config'">
         <!--<button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
@@ -15,6 +11,8 @@
           <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
         </div>
       </div>
+
+      <h1>TimeLapseTidy</h1>      
 
       <div class="actionButtons">
         <div class="actionButtons">
@@ -120,8 +118,8 @@
       </div>
 
       <!-- PROCESSING VIEW -->
-      <div class="processOutput" v-if="status === 'processing' || status === 'result'">
-        <ProgressBar :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
+      <div class="processOutput" v-if="['processing', 'result', 'confirmationDeleteFlagged', 'resultDeleted'].includes(status)">
+          <ProgressBar :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
       </div>
 
       <!-- ERROR VIEW -->
@@ -130,16 +128,26 @@
         <div v-if="error.filename !== ''">FILE: {{ error.filename }}</div>
       </div>
 
-      <!-- RESULT VIEW -->
-      <div class="result" v-if="status === 'result'">
-        <div v-if="result.resultStatus === 'query'">
-          {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
-        </div>
-        <div v-if="result.resultStatus === 'result'">
-          {{ result.deleteCount }} files deleted.
-        </div>
+      <!-- CONFIRMATION DELETE FLAGGED VIEW -->
+      <div class="confirmation" v-if="status === 'confirmationDeleteFlagged'">
+        {{  result.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
       </div>
 
+      <!-- CONFIRMATION DELETE HALF VIEW -->
+      <div class="confirmation" v-if="status === 'confirmationDeleteHalf'">
+        Delete every second file in the target directory?
+      </div>
+
+      <!-- RESULT DELETED -->
+      <div class="result" v-if="status === 'resultDeleted'">
+        {{ result.deleteCount }} {{ result.deleteCount === 1 ? 'file' : 'files' }} deleted.
+      </div>
+      
+      <!-- RESULT RENAMED -->
+      <div class="result" v-if="status === 'resultRenamed'">
+        All files in target directory renamed.
+      </div>
+      
       <!-- LOG VIEW -->
       <div class="output" v-if="status === 'log'">
         <div>
@@ -216,25 +224,12 @@ export default {
 
     footerButtons() {
       return [
+        // Config View
         {
           label: "Start",
           visible: this.status === "config",
           disabled: !this.canStartProcessing,
           onClick: this.startProcessing,
-          class: "btn-primary",
-        },
-        {
-          label: "Cancel",
-          visible: this.status === "processing",
-          disabled: false,
-          onClick: this.cancelProcessing,
-          class: "btn-primary",
-        },
-        {
-          label: "OK",
-          visible: this.status === "result",
-          disabled: false,
-          onClick: this.cancelResult,
           class: "btn-primary",
         },
         {
@@ -248,13 +243,76 @@ export default {
           label: "Delete Half Images",
           visible: this.status === "config",
           disabled: !this.directoryPath,
-          onClick: this.deleteHalfOfImages,
+          onClick: this.confirmDeleteHalf,
           class: "btn-danger",
+        },
+
+        // Process View
+        {
+          label: "Cancel",
+          visible: this.status === "processing",
+          disabled: false,
+          onClick: this.cancelProcessing,
+          class: "btn-primary",
+        },
+
+        // Delete Half
+        {
+          label: "OK",
+          visible: this.status === "confirmationDeleteHalf",
+          disabled: false,
+          onClick: this.deleteHalfOfImages,
+          class: "btn-primary",
+        },
+        {
+          label: "Cancel",
+          visible: this.status === "confirmationDeleteHalf",
+          disabled: false,
+          onClick: this.cancelResult,
+          class: "btn-primary",
+        },
+
+        // Delete Flagged
+        {
+          label: "Delete Files",
+          visible: this.status === "confirmationDeleteFlagged" && this.result.flaggedCount > 0,
+          disabled: false,
+          onClick: this.deleteFlaggedFiles,
+          class: "btn-primary",
+        },
+        {
+          label: "Cancel",
+          visible: this.status === "confirmationDeleteFlagged" && this.result.flaggedCount > 0,
+          disabled: false,
+          onClick: this.cancelResult,
+          class: "btn-primary",
+        },
+
+        // Result Renamed
+        {
+          label: "OK",
+          visible: this.status === "resultRenamed" || (this.status === "confirmationDeleteFlagged" && this.result.flaggedCount <= 0),
+          disabled: false,
+          onClick: this.cancelResult,
+          class: "btn-primary",
+        },
+
+        // OK and back to Config
+        {
+          label: "OK",
+          visible: this.status === "result" || this.status === "resultDeleted",
+          disabled: false,
+          onClick: this.cancelResult,
+          class: "btn-primary",
         },
       ];
     },
   },
   methods: {
+    confirmDeleteHalf() {
+      this.status = "confirmationDeleteHalf";
+    },
+
     getFooterButtonLabel(button) {
       const labels = {
         left: {
@@ -388,8 +446,8 @@ export default {
         const result = await window.electronAPI.deleteFlaggedFiles();
 
         if (result.success) {
-          this.result.resultStatus = "result"
           this.result.deleteCount = result.deleteCount
+          this.status = "resultDeleted";
         } else {
           this.processStatus = `Deletion failed: ${result.error}`;
           this.logMessage(`Deletion failed: ${result.error}`);
@@ -403,7 +461,6 @@ export default {
         this.logMessage('An unexpected error occurred during deletion.');
       } finally {
         this.currentTask = '';
-        this.status = "result";
       }
     },
 
@@ -438,7 +495,7 @@ export default {
         if (result.success) {
           this.result.flaggedCount = result.flaggedCount
           this.result.totalCount = result.totalCount
-          this.result.resultStatus = "query"
+          this.status = "confirmationDeleteFlagged"
           this.processStatus = `Processed ${result.totalCount} images successfully.`;
           this.logMessage(`Processed ${result.totalCount} images successfully.`);
         } else {
@@ -456,7 +513,6 @@ export default {
         processOutcome = 'byError';
       } finally {
         this.currentTask = '';
-        this.status = 'result';
 
         if (processOutcome === 'byProcessCompleted') {
           console.log('Process completed successfully!');
@@ -502,7 +558,6 @@ export default {
     },
 
     async deleteHalfOfImages() {
-      console.log("del half")
       this.status = 'processing';
       this.processStatus = null;
       this.logMessage('Starting renaming process...');
@@ -512,7 +567,7 @@ export default {
 
         if (result.success) {
           this.processStatus = `Deleted ${result.deleteCount} files successfully.`;
-          this.result.resultStatus = "result";
+          this.status = "resultDeleted";
           this.result.deleteCount = result.deleteCount;
         } else {
           this.processStatus = `Deletion failed: ${result.error || 'No files to delete'}`;
@@ -520,8 +575,6 @@ export default {
       } catch (error) {
         console.error('Failed to delete files', error);
         this.processStatus = 'An unexpected error occurred during deletion.';
-      } finally {
-        this.status = 'result';
       }
     },
 
@@ -545,7 +598,7 @@ export default {
         this.processStatus = 'An unexpected error occurred during renaming.';
         this.logMessage('An unexpected error occurred during renaming.');
       } finally {
-        this.status = 'result';
+        this.status = 'resultRenamed';
       }
     },
 
