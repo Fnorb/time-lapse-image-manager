@@ -70,6 +70,7 @@ ipcMain.handle('dialog:openDirectory', async () => {
 });
 
 ipcMain.handle('processImages', async (event, payload) => {
+  console.log("START PROCESSING");
   cancelProcessingRequested = false;
   const { directoryPath, options } = payload;
   filesFlaggedForDeletion = [];
@@ -148,7 +149,6 @@ ipcMain.handle('processImages', async (event, payload) => {
 
 ipcMain.handle('cancelProcessing', () => {
   cancelProcessingRequested = true;
-  console.log('Processing has been canceled.');
   return { success: true };
 });
 
@@ -159,6 +159,29 @@ ipcMain.handle('deleteFlaggedFiles', async () => {
     for (let file of filesFlaggedForDeletion) {
       await fs.promises.unlink(file);
       deleteCount++;
+    }
+
+    return { success: true, deleteCount };
+  } catch (error) {
+    console.error('Error deleting files:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('files:deleteHalf', async (event, directoryPath) => {
+  console.log("deleting half backend")
+  try {
+    const files = await readdirAsync(directoryPath);
+    const jpgFiles = files.filter(file => file.endsWith('.jpg')); // Ensure correct extension handling
+
+    let deleteCount = 0;
+
+    for (let i = 0; i < jpgFiles.length; i++) {
+      if (i % 2 === 0) {
+        const filePath = path.join(directoryPath, jpgFiles[i]); // Construct the full file path
+        await fs.promises.unlink(filePath);
+        deleteCount++;
+      }
     }
 
     return { success: true, deleteCount };

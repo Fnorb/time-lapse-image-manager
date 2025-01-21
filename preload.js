@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   renameFiles: (directoryPath) => ipcRenderer.invoke('files:rename', directoryPath),
 
+  deleteHalfOfImages: (directoryPath) => ipcRenderer.invoke('files:deleteHalf', directoryPath),
+
   getFileCount: (directoryPath) => ipcRenderer.invoke('files:getFileCount', directoryPath),
 });
 

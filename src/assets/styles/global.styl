@@ -10,6 +10,12 @@ html, body, #app, .app-container
   background-color colorlightBlue
   overflow hidden
 
+buttonMargin = 20px
+.margin-left
+  margin-left buttonMargin
+.margin-right
+  margin-right buttonMargin
+
 .text-output
   color #333
   font-family 'Arial', sans-serif
@@ -39,13 +45,16 @@ button
   border-radius: 6px
   cursor: pointer
   transition: all 0.3s ease
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1)
+  //box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1)
+  outline 0px solid rgb(120, 160, 196)
+  transition outline .2s
 
   // On hover
   &:hover
     background-color: #357ab8
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15)
-    transform: translateY(-2px)
+    //box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15)
+    // transform: translateY(-2px)
+    outline-width 3px
 
   // On active click
   &:active
@@ -59,6 +68,7 @@ button
     color: #888888
     cursor: not-allowed
     box-shadow: none
+    outline-width 0
 
 .app-container
   display flex

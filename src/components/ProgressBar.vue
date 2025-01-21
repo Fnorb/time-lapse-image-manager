@@ -79,6 +79,7 @@
             this.barData = [];
             this.barWidth = this.canvas.width / this.imagesTotal;
             let luminosity = 50;
+            this.lastBarCount = -1;
 
             if (this.imagesTotal <= this.canvas.width) {
                 for (let i = 0; i <= this.imageStatuses.length; i++) {

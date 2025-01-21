@@ -6,29 +6,30 @@
 
     <div class="footer">
       <div class="selectButton" v-if="status === 'config'">
-        <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
+        <!--<button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
         <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
-        <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
+        <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>-->
+        <div class="selectButton" v-if="status === 'config'">
+          <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
+          <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
+          <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
+        </div>
       </div>
 
       <div class="actionButtons">
-        <button
-        class="btn"
-        v-if="getFooterButtonLabel('left') !== ''" 
-        :disabled="getFooterButtonDisabled('left')" 
-        v-text="getFooterButtonLabel('left')"
-        @click="handleFooterButtonClick('left')"
-        >
-      </button>
-
-      <button
-        class="btn" 
-        :disabled="getFooterButtonDisabled('right')" 
-        v-if="getFooterButtonLabel('right') !== ''" 
-        v-text="getFooterButtonLabel('right')"
-        @click="handleFooterButtonClick('right')"
-        >
-      </button>
+        <div class="actionButtons">
+          <button
+            v-for="(button, index) in visibleFooterButtons"
+            :key="index"
+            class="btn"
+            :class="button.class"
+            :disabled="button.disabled"
+            @click="button.onClick"
+          >
+            {{ button.label }}
+          </button>
+        </div>
+        
       </div>      
     </div>
 
@@ -208,6 +209,50 @@ export default {
         this.options.neighborDifferenceCheck)
       );
     },
+
+    visibleFooterButtons() {
+      return this.footerButtons.filter((button) => button.visible);
+    },
+
+    footerButtons() {
+      return [
+        {
+          label: "Start",
+          visible: this.status === "config",
+          disabled: !this.canStartProcessing,
+          onClick: this.startProcessing,
+          class: "btn-primary",
+        },
+        {
+          label: "Cancel",
+          visible: this.status === "processing",
+          disabled: false,
+          onClick: this.cancelProcessing,
+          class: "btn-primary",
+        },
+        {
+          label: "OK",
+          visible: this.status === "result",
+          disabled: false,
+          onClick: this.cancelResult,
+          class: "btn-primary",
+        },
+        {
+          label: "Rename Files",
+          visible: this.status === "config",
+          disabled: !this.directoryPath,
+          onClick: this.startRenaming,
+          class: "btn-secondary margin-left",
+        },
+        {
+          label: "Delete Half Images",
+          visible: this.status === "config",
+          disabled: !this.directoryPath,
+          onClick: this.deleteHalfOfImages,
+          class: "btn-danger",
+        },
+      ];
+    },
   },
   methods: {
     getFooterButtonLabel(button) {
@@ -293,9 +338,7 @@ export default {
     async updateFileCount() {
       try {
         if (this.directoryPath) {
-          // Call your method to count files in the directory (you need to implement this on the backend side)
           const fileCount = await window.electronAPI.getFileCount(this.directoryPath);
-          console.log(fileCount)
           this.fileCount = fileCount.fileCount;
         } else {
           console.warn("Directory path not available.");
@@ -413,7 +456,6 @@ export default {
         processOutcome = 'byError';
       } finally {
         this.currentTask = '';
-        console.log("status is result")
         this.status = 'result';
 
         if (processOutcome === 'byProcessCompleted') {
@@ -457,6 +499,30 @@ export default {
       }
 
       return valid;
+    },
+
+    async deleteHalfOfImages() {
+      console.log("del half")
+      this.status = 'processing';
+      this.processStatus = null;
+      this.logMessage('Starting renaming process...');
+
+      try {
+        const result = await window.electronAPI.deleteHalfOfImages(this.directoryPath);
+
+        if (result.success) {
+          this.processStatus = `Deleted ${result.deleteCount} files successfully.`;
+          this.result.resultStatus = "result";
+          this.result.deleteCount = result.deleteCount;
+        } else {
+          this.processStatus = `Deletion failed: ${result.error || 'No files to delete'}`;
+        }
+      } catch (error) {
+        console.error('Failed to delete files', error);
+        this.processStatus = 'An unexpected error occurred during deletion.';
+      } finally {
+        this.status = 'result';
+      }
     },
 
     async startRenaming() {
