@@ -6,7 +6,7 @@
         <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
         <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>-->
         <div class="selectButton" v-if="status === 'config'">
-          <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
+          <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Folder</button>
           <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
           <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
         </div>
@@ -36,9 +36,9 @@
 
       <div class="config" v-if="status === 'config'">
         <div class="container">
-          <!-- Options Section -->
+          <!-- Settings Section -->
           <div>
-            <h3>Options</h3>
+            <h3>Settings</h3>
   
             <!-- Minimum Brightness Option -->
             <div class="form-check">
@@ -109,17 +109,15 @@
               <span class="brightness-value">(0-100)</span>
             </div>
           </div>
-  
-          <!-- Status of processing -->
-          <div v-if="processStatus">
-            <p>{{ processStatus }}</p>
-          </div>
         </div>
       </div>
 
       <!-- PROCESSING VIEW -->
       <div class="processOutput" v-if="['processing', 'result', 'confirmationDeleteFlagged', 'resultDeleted'].includes(status)">
-          <ProgressBar :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
+          <div v-if="['Renaming files', 'Deleting files'].includes(processStatus)">
+            <div class="result">{{ processStatus }} <span class="dots"></span></div>
+          </div>
+          <ProgressBar v-else :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
       </div>
 
       <!-- ERROR VIEW -->
@@ -472,7 +470,7 @@ export default {
 
       this.imageStatuses = [];
       this.status = 'processing';
-      this.processStatus = null;
+      this.processStatus = "Filtering files...";
       this.logMessage('Starting processing...');
       this.cancelProcessingRequested = false;
 
@@ -559,7 +557,7 @@ export default {
 
     async deleteHalfOfImages() {
       this.status = 'processing';
-      this.processStatus = null;
+      this.processStatus = "Deleting files";
       this.logMessage('Starting renaming process...');
 
       try {
@@ -580,7 +578,7 @@ export default {
 
     async startRenaming() {
       this.status = 'processing';
-      this.processStatus = null;
+      this.processStatus = "Renaming files";
       this.logMessage('Starting renaming process...');
 
       try {
@@ -639,6 +637,7 @@ export default {
 
 <style lang="stylus">
 @import 'normalize.css'
+@import './assets/styles/fonts.styl'
 @import './assets/styles/global.styl'
 
 .error {
