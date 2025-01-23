@@ -5,7 +5,6 @@
             <div>Processed: {{ imageStatuses.length }} / {{ imagesTotal }}</div>
             <div>Passed: <span class="passed">{{ passedCount }}</span></div>
             <div>Failed: <span class="failed">{{ failedCount }}</span></div>
-            <div v-if="this.timeAverage">Time left: <span class="time">{{ timeLeft }}</span></div>
         </div>
     </div>
 </template>
@@ -41,8 +40,6 @@
             passedCount: -1,
             lastBarCount: -1,
             luminosityRange: 50,
-            timeAverage: 0,
-            timeLastFile: null,
         }
     },
     mounted() {
@@ -65,35 +62,6 @@
         this.updateProgressBarDimensions();
     },
 
-    computed: {
-        timeLeft() {
-       // Convert to total milliseconds
-       const ms = (this.imagesTotal - this.imageStatuses.length) * this.timeAverage;
-
-// Calculate days, hours, minutes, and seconds
-const days = Math.floor(ms / (24 * 60 * 60 * 1000)); // 1 day = 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
-const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)); // 1 hour = 60 minutes * 60 seconds * 1000 milliseconds
-const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000)); // 1 minute = 60 seconds * 1000 milliseconds
-const seconds = Math.floor((ms % (60 * 1000)) / 1000); // 1 second = 1000 milliseconds
-
-// Build the time string dynamically based on the presence of each time unit
-let timeString = '';
-if (days > 0) {
-    timeString += `${days}d `;
-}
-if (hours > 0 || days > 0) {
-    timeString += `${hours}h `;
-}
-if (minutes > 0 || hours > 0 || days > 0) {
-    timeString += `${minutes}m `;
-}
-timeString += `${seconds}s`;
-
-// Return the final formatted string (remove any trailing spaces)
-return timeString.trim();
-        },
-    },
-
     methods: {
         updateProgressBarDimensions() {
             this.canvas.width = 0;
@@ -105,18 +73,7 @@ return timeString.trim();
             this.canvas.width = contentWidth;
         },
 
-        updateTime() {
-            const now = Date.now();
-            if (this.timeLastFile) {
-                const diff = now - this.timeLastFile;
-                this.timeAverage += (diff - this.timeAverage) / this.imageStatuses?.length;
-                console.log(diff, this.timeAverage, this.imageStatuses?.length);
-            }
-            this.timeLastFile = now;
-        },
-
         processNewData() {
-            this.updateTime();
             this.passedCount = 0;
             this.failedCount = 0;
             this.barData = [];
@@ -241,7 +198,7 @@ return timeString.trim();
         position absolute
         border-radius 10px
         top 20px
-        left 20px
+        right 20px
         background-color rgba(0, 0, 0, 0.5)
         color #ffffff
         padding 5px 30px 5px 30px
