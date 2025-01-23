@@ -1,11 +1,11 @@
 <template>
     <div class="progress-bar-container">
         <canvas ref="progressCanvas"></canvas>
-        <div class="display" v-if="showDisplay">
+        <div class="display"  :class="{ 'completed': imagesTotal === imageBrightnesses.length }" v-if="showDisplay">
             <div>Processed: {{ imageStatuses.length }} / {{ imagesTotal }}</div>
             <div>Passed: <span class="passed">{{ passedCount }}</span></div>
             <div>Failed: <span class="failed">{{ failedCount }}</span></div>
-            <div v-if="this.timeAverage">Time left: <span class="time">{{ timeLeft }}</span></div>
+            <div v-if="this.timeAverage && imagesTotal != imageBrightnesses.length">Time left: <span class="time">{{ timeLeft }}</span></div>
         </div>
     </div>
 </template>
@@ -67,30 +67,25 @@
 
     computed: {
         timeLeft() {
-       // Convert to total milliseconds
-       const ms = (this.imagesTotal - this.imageStatuses.length) * this.timeAverage;
+            const ms = (this.imagesTotal - this.imageStatuses.length) * this.timeAverage;
+            const days = Math.floor(ms / (24 * 60 * 60 * 1000)); // 1 day = 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
+            const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)); // 1 hour = 60 minutes * 60 seconds * 1000 milliseconds
+            const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000)); // 1 minute = 60 seconds * 1000 milliseconds
+            const seconds = Math.floor((ms % (60 * 1000)) / 1000); // 1 second = 1000 milliseconds
 
-// Calculate days, hours, minutes, and seconds
-const days = Math.floor(ms / (24 * 60 * 60 * 1000)); // 1 day = 24 hours * 60 minutes * 60 seconds * 1000 milliseconds
-const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)); // 1 hour = 60 minutes * 60 seconds * 1000 milliseconds
-const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000)); // 1 minute = 60 seconds * 1000 milliseconds
-const seconds = Math.floor((ms % (60 * 1000)) / 1000); // 1 second = 1000 milliseconds
+            let timeString = '';
+            if (days > 0) {
+                timeString += `${days}d `;
+            }
+            if (hours > 0 || days > 0) {
+                timeString += `${hours}h `;
+            }
+            if (minutes > 0 || hours > 0 || days > 0) {
+                timeString += `${minutes}m `;
+            }
+            timeString += `${seconds}s`;
 
-// Build the time string dynamically based on the presence of each time unit
-let timeString = '';
-if (days > 0) {
-    timeString += `${days}d `;
-}
-if (hours > 0 || days > 0) {
-    timeString += `${hours}h `;
-}
-if (minutes > 0 || hours > 0 || days > 0) {
-    timeString += `${minutes}m `;
-}
-timeString += `${seconds}s`;
-
-// Return the final formatted string (remove any trailing spaces)
-return timeString.trim();
+            return timeString.trim();
         },
     },
 
@@ -244,6 +239,10 @@ return timeString.trim();
         background-color rgba(0, 0, 0, 0.5)
         color #ffffff
         padding 5px 30px 5px 30px
+        transition top .5s
+
+        &.completed
+            top 60px
 
         .passed
             color rgb(0, 200, 0)

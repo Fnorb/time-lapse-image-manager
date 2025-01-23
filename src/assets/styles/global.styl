@@ -143,6 +143,39 @@ button
     width 100%
     height 100%
 
+.v-popper--has-tooltip
+  display inline-block
+  width 20px
+  height 20px
+  line-height 20px
+  text-align center
+  font-size 14px
+  font-weight bold
+  color #fff
+  background-color #697565
+  border-radius 50%
+  cursor pointer
+  margin-left 8px
+  transition all 0.3s ease
+  box-shadow 0 2px 4px rgba(0, 0, 0, 0.2) 
+
+.form-check-label
+  transition: filter 0.3s ease
+  &:hover
+    filter brightness(120%) drop-shadow(0 0 5px white)
+
+@keyframes pulse
+  0%, 100%
+    transform scale(1)
+    opacity 1
+  50%
+    transform scale(1.1)
+    opacity 0.8
+
+.info-mark.pulsing
+  animation pulse 2s infinite
+
+
 .footer
   position relative
   display grid

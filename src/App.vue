@@ -39,7 +39,6 @@
           <!-- Settings Section -->
           <div>
             <h3>Settings</h3>
-  
             <!-- Minimum Brightness Option -->
             <div class="form-check">
               <input
@@ -61,6 +60,7 @@
                 :class="{ error: validationErrors.minBrightness }"
               />
               <span class="brightness-value">(0-100)</span>
+              <span class="info-mark" v-tooltip="'Finds images that are too dark. 0 = black, 100 = white'">?</span>
             </div>
   
             <!-- Maximum Brightness Option -->
@@ -84,6 +84,7 @@
                 :class="{ error: validationErrors.maxBrightness }"
               />
               <span class="brightness-value">(0-100)</span>
+              <span class="info-mark" v-tooltip="'Finds images that are too bright. 0 = black, 100 = white'">?</span>
             </div>
   
             <!-- Difference from Neighbors Option -->
@@ -107,6 +108,7 @@
                 :class="{ error: validationErrors.neighborDifference }"
               />
               <span class="brightness-value">(0-100)</span>
+              <span class="info-mark" v-tooltip="'Flags images that have a different contrast level'">?</span>
             </div>
           </div>
 
@@ -122,6 +124,7 @@
             <label class="form-check-label" for="fast">
               Fast mode
             </label>
+            <span class="info-mark" v-tooltip="'Increases processing speed by sacrificing accuracy'">?</span>
           </div>
         </div>
       </div>
@@ -484,6 +487,7 @@ export default {
       }
 
       this.imageStatuses = [];
+      this.imageBrightnesses = [];
       this.status = 'processing';
       this.processStatus = "Filtering files...";
       this.logMessage('Starting processing...');
