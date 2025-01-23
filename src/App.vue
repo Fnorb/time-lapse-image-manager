@@ -109,6 +109,20 @@
               <span class="brightness-value">(0-100)</span>
             </div>
           </div>
+
+          <!-- Fast Mode -->
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="fast"
+              v-model="options.fast"
+              :disabled="status === 'processing'"
+            />
+            <label class="form-check-label" for="fast">
+              Fast mode
+            </label>
+          </div>
         </div>
       </div>
 
@@ -189,6 +203,7 @@ export default {
       },
       currentTask: '',
       options: {
+        fast: false,
         minBrightnessCheck: false,
         minBrightness: 20,
         maxBrightnessCheck: false,
@@ -480,6 +495,7 @@ export default {
           minBrightness: this.options.minBrightnessCheck ? this.options.minBrightness : undefined,
           maxBrightness: this.options.maxBrightnessCheck ? this.options.maxBrightness : undefined,
           neighborDifference: this.options.neighborDifferenceCheck ? this.options.neighborDifference : undefined,
+          fast: this.options.fast,
         },
       };
 

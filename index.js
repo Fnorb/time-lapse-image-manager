@@ -76,14 +76,21 @@ ipcMain.handle('processImages', async (event, payload) => {
   let file = '';
 
   async function calculateBrightness(filePath) {
-    const { data, info } = await sharp(filePath)
+    let sharpInstance = sharp(filePath);
+
+    // Apply resize only in fast mode
+    if (options.fast) {
+      sharpInstance = sharpInstance.resize({ width: 100 });
+    }
+
+    const { data, info } = await sharpInstance
       .raw()
       .toBuffer({ resolveWithObject: true });
 
     let totalBrightness = 0;
     let pixelCount = 0;
 
-    for (let i = 0; i < data.length; i += info.channels) {
+    for (let i = 0; i < data.length; i += info.channels * 10) {
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];

@@ -110,7 +110,6 @@ return timeString.trim();
             if (this.timeLastFile) {
                 const diff = now - this.timeLastFile;
                 this.timeAverage += (diff - this.timeAverage) / this.imageStatuses?.length;
-                console.log(diff, this.timeAverage, this.imageStatuses?.length);
             }
             this.timeLastFile = now;
         },
