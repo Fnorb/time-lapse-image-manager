@@ -1,11 +1,11 @@
 <template>
   <div class="app-container">
-    <div class="footer">
-      <div class="selectButton" v-if="status === 'config'">
+    <div class="action-bar">
+      <div class="select-button" v-if="status === 'config'">
         <!--<button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Directory</button>
         <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
         <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>-->
-        <div class="selectButton" v-if="status === 'config'">
+        <div class="select-button" v-if="status === 'config'">
           <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Folder</button>
           <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
           <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
@@ -14,10 +14,10 @@
 
       <h1>TimeLapseTidy</h1>      
 
-      <div class="actionButtons">
-        <div class="actionButtons">
+      <div class="action-buttons">
+        <div class="action-buttons">
           <button
-            v-for="(button, index) in visibleFooterButtons"
+            v-for="(button, index) in visibleActionBarButtons"
             :key="index"
             class="btn"
             :class="button.class"
@@ -220,11 +220,11 @@ export default {
       );
     },
 
-    visibleFooterButtons() {
-      return this.footerButtons.filter((button) => button.visible);
+    visibleActionBarButtons() {
+      return this.actionBarButtons.filter((button) => button.visible);
     },
 
-    footerButtons() {
+    actionBarButtons() {
       return [
         // Config View
         {
@@ -315,7 +315,7 @@ export default {
       this.status = "confirmationDeleteHalf";
     },
 
-    getFooterButtonLabel(button) {
+    getActionBarButtonLabel(button) {
       const labels = {
         left: {
           config: "Start",
@@ -342,7 +342,7 @@ export default {
       return labels[button]?.[this.status] || '';
     },
 
-    getFooterButtonDisabled(button) {
+    getActionBarButtonDisabled(button) {
       return (
         (button === 'right' && !this.directoryPath) ||
         (button === 'left' && this.status === 'config' && !this.canStartProcessing) || 
@@ -350,7 +350,7 @@ export default {
       );
     },
 
-    handleFooterButtonClick(button) {
+    handleActionBarButtonClick(button) {
       switch (this.status) {
         case 'config':
           if (button === 'left') { this.startProcessing(); }

@@ -1,10 +1,49 @@
-// Color variables
+// ==============================
+// Color and Spacing Variables
+// ==============================
 colorBlack = #000000
 colorHeader = #1E201E
 colorContent = #3C3D37
 colorButton = #697565
 colorFont = #ECDFCC
+colorFormGray = #333333
+colorFormLightGray = #CCCCCC
+colorFormWhite = #FFFFFF
+colorErrorRed = #FF0000
 buttonGap = 5px
+buttonMargin = 20px
+
+
+// ==============================
+// Global Styles (html, body, app-container)
+// ==============================
+html, body, #app, .app-container
+  height 100%
+  background-color colorBlack
+  overflow hidden
+  color colorFont
+  font-family Montserrat
+
+label, input
+  cursor pointer
+
+.app-container
+  display flex
+  flex-direction column
+  height 100%
+  background-color colorBlack
+
+
+// ==============================
+// Ellipsis Styles & Animation
+// ==============================
+.dots
+  width 10px
+  display inline-block
+
+.dots::after
+  content "."
+  animation dots 1s steps(4, end) infinite
 
 .dots
   width 10px
@@ -14,156 +53,22 @@ buttonGap = 5px
   content "."
   animation dots 1s steps(4, end) infinite
 
-@keyframes dots {
-  0% {
-    content: "";
-  }
-  25% {
-    content: ".";
-  }
-  50% {
-    content: "..";
-  }
-  75% {
-    content: "...";
-  }
-  100% {
-    content: "";
-  }
-}
+@keyframes dots
+  0%
+    content: ""
+  25%
+    content: "."
+  50%
+    content: ".."
+  75%
+    content: "..."
+  100%
+    content: ""
 
 
-html, body, #app, .app-container
-  height 100%
-  background-color colorlightBlue
-  overflow hidden
-  color colorFont
-  font-family Montserrat
-
-label, input
-  cursor pointer
-
-buttonMargin = 20px
-.margin-left
-  margin-left buttonMargin
-.margin-right
-  margin-right buttonMargin
-
-.text-output
-  color #333
-  font-family 'Arial', sans-serif
-  font-size 12px
-  font-weight 400
-  background-color #ffffff
-  padding 8px 12px
-  border 1px solid #cccccc
-  height 10px
-  white-space nowrap
-  overflow hidden
-  text-overflow ellipsis
-  max-width 300px
-  box-shadow 0 2px 4px rgba(0, 0, 0, 0.1)
-
-  &.path
-    direction rtl
-
-button
-  background-color: colorContent 
-  font-family: 'Arial', sans-serif
-  color colorFont
-  font-size: 16px
-  font-weight: 600
-  padding: 12px 20px
-  border: none
-  border-radius: 6px
-  cursor: pointer
-  transition: all 0.3s ease
-  //box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1)
-  outline 0px solid colorFont
-  transition outline .2s, filter .2s
-
-  // On hover
-  &:hover
-    background-color colorButton
-    //box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15)
-    // transform: translateY(-2px)
-    outline-width 3px
-
-  // On active click
-  &:active
-    transform: translateY(0)
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1)
-    filter brightness(1.2)
-
-  // Disabled button
-  &:disabled
-    cursor: not-allowed
-    box-shadow: none
-    outline-width 0
-    filter contrast(.2)
-
-.app-container
-  display flex
-  flex-direction column
-  height 100%
-  background-color colorlightBlue
-
-.content
-  height 100%
-  background-color colorContent
-  position relative
-
-  > div
-    padding 20px
-  
-  .result
-  .confirmation
-    position absolute
-    border-radius 10px
-    top 20px
-    left 20px
-    background-color rgba(0, 0, 0, 0.5)
-    color colorFont
-    padding 5px 30px 5px 30px
-
-  .processOutput
-    padding 0
-
-  .processError
-    box-shadow 0px 0px 25px 25px rgba(255, 0, 0, 0.2) inset, 0px 0px 5px 5px rgba(255, 0, 0, 0.5) inset
-    height 100%
-
-    div
-      position relative
-      top 10px
-      left 10px
-      width fit-content
-
-  .processOutput
-    width 100%
-    height 100%
-
-.v-popper--has-tooltip
-  display inline-block
-  width 20px
-  height 20px
-  line-height 20px
-  text-align center
-  font-size 14px
-  font-weight bold
-  color #fff
-  background-color #697565
-  border-radius 50%
-  cursor pointer
-  margin-left 8px
-  transition all 0.3s ease
-  box-shadow 0 2px 4px rgba(0, 0, 0, 0.2) 
-
-.form-check-label
-  transition: filter 0.3s ease
-  &:hover
-    filter brightness(120%) drop-shadow(0 0 5px white)
-
+// ==============================
+// Info Question Mark Styles & Animation
+// ==============================
 @keyframes pulse
   0%, 100%
     transform scale(1)
@@ -176,7 +81,97 @@ button
   animation pulse 2s infinite
 
 
-.footer
+// ==============================
+// Margin Utility Classes
+// ==============================
+.margin-left
+  margin-left buttonMargin
+.margin-right
+  margin-right buttonMargin
+
+
+// ==============================
+// Button Styles
+// ==============================
+button
+  background-color colorContent
+  font-family 'Arial', sans-serif
+  color colorFont
+  font-size 16px
+  font-weight 600
+  padding 12px 20px
+  border none
+  border-radius 6px
+  cursor pointer
+  transition all 0.3s ease
+  outline 0px solid colorFont
+
+  &:hover
+    background-color colorButton
+    outline-width 3px
+
+  &:active
+    box-shadow 0 3px 5px rgba(0, 0, 0, 0.1)
+    filter brightness(1.2)
+
+  &:disabled
+    cursor not-allowed
+    box-shadow none
+    outline-width 0
+    filter contrast(.2)
+
+
+// ==============================
+// Text Output & Form Elements
+// ==============================
+.text-output
+  color colorFormGray
+  font-family 'Arial', sans-serif
+  font-size 12px
+  font-weight 400
+  background-color colorFormWhite
+  padding 8px 12px
+  border 1px solid colorFormLightGray
+  height 10px
+  white-space nowrap
+  overflow hidden
+  text-overflow ellipsis
+  max-width 300px
+  box-shadow 0 2px 4px rgba(0, 0, 0, 0.1)
+
+  &.path
+    direction rtl
+
+.form-check-label
+  transition: filter 0.3s ease
+  &:hover
+    filter brightness(120%) drop-shadow(0 0 5px white)
+
+
+// ==============================
+// Popper and Tooltip Styles
+// ==============================
+.v-popper--has-tooltip
+  display inline-block
+  width 20px
+  height 20px
+  line-height 20px
+  text-align center
+  font-size 14px
+  font-weight bold
+  color colorFormWhite
+  background-color colorButton
+  border-radius 50%
+  cursor pointer
+  margin-left 8px
+  transition all 0.3s ease
+  box-shadow 0 2px 4px rgba(0, 0, 0, 0.2)
+
+
+// ==============================
+// Action Bar Styles
+// ==============================
+.action-bar
   position relative
   display grid
   grid-template-areas "select headline" "actions actions"
@@ -185,14 +180,14 @@ button
   background-color colorHeader
   row-gap buttonGap
   padding buttonGap * 2 buttonGap * 4 buttonGap * 2 buttonGap * 4
-  
-  .selectButton
-  .actionButtons
+
+  .select-button
+  .action-buttons
     grid-area select
     display flex
     gap buttonGap
     align-items center
-    &.actionButtons
+    &.action-buttons
       grid-area actions
 
   h1
@@ -201,18 +196,60 @@ button
     font-size 2rem
     color colorFont
 
+
+// ==============================
+// Configuration View Styles
+// ==============================
 .config
   grid-area config
   height 100%
   box-shadow 0px 10px 10px rgba(0, 0, 0, 0.1) inset
+
   h3 
     margin-top 0
 
-.output
-  grid-area output
-  background-color #fff
-  padding 15px
 
+// ==============================
+// Error Styles
+// ==============================
 .error
-  border 2px solid red
-  background-color #ffe6e6
+  border 2px solid colorErrorRed
+  background-color colorFont
+
+
+
+// ==============================
+// 11. Content Section Styles
+// ==============================
+.content
+  height 100%
+  background-color colorContent
+  position relative
+
+  > div
+    padding 20px
+
+  .result
+  .confirmation
+    position absolute
+    border-radius 10px
+    top 20px
+    left 20px
+    background-color rgba(0, 0, 0, 0.5)
+    color colorFont
+    padding 5px 30px
+
+  .processOutput
+    padding 0
+    width 100%
+    height 100%
+
+  .processError
+    box-shadow 0px 0px 25px 25px rgba(255, 0, 0, 0.2) inset, 0px 0px 5px 5px rgba(255, 0, 0, 0.5) inset
+    height 100%
+
+    div
+      position relative
+      top 10px
+      left 10px
+      width fit-content
