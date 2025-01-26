@@ -162,18 +162,6 @@
       <div class="result" v-if="status === 'resultRenamed'">
         All files in target directory renamed.
       </div>
-      
-      <!-- LOG VIEW -->
-      <div class="output" v-if="status === 'log'">
-        <div>
-          <h4>Log</h4>
-          <div class="log-container" ref="logContainer">
-            <p v-for="(log, index) in logs" :key="index" class="log-message">
-              {{ log }}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -219,8 +207,6 @@ export default {
         maxBrightness: false,
         neighborDifference: false,
       },
-      logOutput: false,
-      logs: [],
       cancelProcessingRequested: false,
     };
   },
@@ -422,26 +408,14 @@ export default {
       }
     },
 
-    logMessage(message) {
-      if (this.logOutput) {
-        this.logs.push(message);
-        this.$nextTick(() => {
-          const logContainer = this.$refs.logContainer;
-          logContainer.scrollTop = logContainer.scrollHeight;
-        });
-      }
-    },
-
     async pickDirectory() {
       try {
         const { fileCount, directoryPath } = await window.electronAPI.openDirectory();
         this.fileCount = fileCount;
         this.directoryPath = directoryPath;
         this.processStatus = null;
-        this.logMessage(`Opened directory with ${fileCount} files.`);
       } catch (error) {
         console.error('Failed to pick directory or count files', error);
-        this.logMessage('Error opening directory.');
       }
     },
 
@@ -466,7 +440,6 @@ export default {
           this.status = "resultDeleted";
         } else {
           this.processStatus = `Deletion failed: ${result.error}`;
-          this.logMessage(`Deletion failed: ${result.error}`);
           this.error.message = result.error;
           this.error.filename = result.filename;
           this.status = "error";
@@ -474,7 +447,6 @@ export default {
 
       } catch (error) {
         this.processStatus = 'An unexpected error occurred during deletion.';
-        this.logMessage('An unexpected error occurred during deletion.');
       } finally {
         this.currentTask = '';
       }
@@ -482,7 +454,6 @@ export default {
 
     async startProcessing() {
       if (!this.validateAllFields()) {
-        this.logMessage("Validation failed. Please correct the errors before proceeding.");
         return;
       }
 
@@ -490,7 +461,6 @@ export default {
       this.imageBrightnesses = [];
       this.status = 'processing';
       this.processStatus = "Filtering files...";
-      this.logMessage('Starting processing...');
       this.cancelProcessingRequested = false;
 
       const payload = {
@@ -515,10 +485,8 @@ export default {
           this.result.totalCount = result.totalCount
           this.status = "confirmationDeleteFlagged"
           this.processStatus = `Processed ${result.totalCount} images successfully.`;
-          this.logMessage(`Processed ${result.totalCount} images successfully.`);
         } else {
           this.processStatus = `Processing failed: ${result.error}`;
-          this.logMessage(`Processing failed: ${result.error}`);
           this.error.message = result.error;
           this.error.filename = result.filename;
           this.status = "error";
@@ -527,7 +495,6 @@ export default {
 
       } catch (error) {
         this.processStatus = 'An unexpected error occurred during processing.';
-        this.logMessage('An unexpected error occurred during processing.');
         processOutcome = 'byError';
       } finally {
         this.currentTask = '';
@@ -550,7 +517,6 @@ export default {
     cancelProcessing() {
       this.cancelProcessingRequested = true;
       this.processStatus = 'Processing has been canceled.';
-      this.logMessage('Processing has been canceled.');
       window.electronAPI.cancelProcessing(); 
     },
 
@@ -558,17 +524,14 @@ export default {
       let valid = true;
 
       if (this.options.minBrightnessCheck && (this.options.minBrightness < 0 || this.options.minBrightness > 100)) {
-        this.logMessage("Minimum brightness must be between 0 and 100.");
         valid = false;
       }
 
       if (this.options.maxBrightnessCheck && (this.options.maxBrightness < 0 || this.options.maxBrightness > 100)) {
-        this.logMessage("Maximum brightness must be between 0 and 100.");
         valid = false;
       }
 
       if (this.options.neighborDifferenceCheck && (this.options.neighborDifference < 0 || this.options.neighborDifference > 100)) {
-        this.logMessage("Neighbor difference must be between 0 and 100.");
         valid = false;
       }
 
@@ -578,8 +541,7 @@ export default {
     async deleteHalfOfImages() {
       this.status = 'processing';
       this.processStatus = "Deleting files";
-      this.logMessage('Starting renaming process...');
-
+   
       try {
         const result = await window.electronAPI.deleteHalfOfImages(this.directoryPath);
 
@@ -599,22 +561,18 @@ export default {
     async startRenaming() {
       this.status = 'processing';
       this.processStatus = "Renaming files";
-      this.logMessage('Starting renaming process...');
-
+    
       try {
         const result = await window.electronAPI.renameFiles(this.directoryPath);
 
         if (result.success) {
           this.processStatus = `Renamed ${result.renamedCount} files successfully.`;
-          this.logMessage(`Renamed ${result.renamedCount} files successfully.`);
         } else {
           this.processStatus = `Renaming failed: ${result.error || 'No files to rename'}`;
-          this.logMessage(`Renaming failed: ${result.error || 'No files to rename'}`);
         }
       } catch (error) {
         console.error('Failed to rename files', error);
         this.processStatus = 'An unexpected error occurred during renaming.';
-        this.logMessage('An unexpected error occurred during renaming.');
       } finally {
         this.status = 'resultRenamed';
       }
@@ -629,7 +587,6 @@ export default {
     },
 
     onImageStatus(file, status, averageBrightess) {
-      this.logMessage(`Image: ${file} - Status: ${status}`);
       this.imageStatuses = [...this.imageStatuses, status];
       this.imageBrightnesses = [...this.imageBrightnesses, averageBrightess];
     },
