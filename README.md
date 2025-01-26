@@ -1,7 +1,6 @@
 # Image Processing App -TimeLapse Tidy
 
 ## To-Do List
-- [ ] Remove no longer needed log output.
 - [ ] Improve renaming function to handle existing file conflicts.
 - [ ] Add parallel processing for better performance.
     - [ ] Optimize progress bar for non-linear workflows.
