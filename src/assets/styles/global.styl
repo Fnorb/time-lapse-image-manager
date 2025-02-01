@@ -1,27 +1,11 @@
 // ==============================
-// Color and Spacing Variables
-// ==============================
-colorBlack = #000000
-colorHeader = #1E201E
-colorContent = #3C3D37
-colorButton = #697565
-colorFont = #ECDFCC
-colorFormGray = #333333
-colorFormLightGray = #CCCCCC
-colorFormWhite = #FFFFFF
-colorErrorRed = #FF0000
-buttonGap = 5px
-buttonMargin = 20px
-
-
-// ==============================
 // Global Styles (html, body, app-container)
 // ==============================
 html, body, #app, .app-container
   height 100%
-  background-color colorBlack
+  background-color colorPalette.contentBG
   overflow hidden
-  color colorFont
+  color colorPalette.font
   font-family Montserrat
 
 label, input
@@ -31,7 +15,6 @@ label, input
   display flex
   flex-direction column
   height 100%
-  background-color colorBlack
 
 
 // ==============================
@@ -94,9 +77,9 @@ label, input
 // Button Styles
 // ==============================
 button
-  background-color colorContent
+  background-color colorPalette.buttonBG
   font-family 'Arial', sans-serif
-  color colorFont
+  color colorPalette.font
   font-size 16px
   font-weight 600
   padding 12px 20px
@@ -104,10 +87,12 @@ button
   border-radius 6px
   cursor pointer
   transition all 0.3s ease
-  outline 0px solid colorFont
+  outline-color colorPalette.buttonOutline
+  outline-width 0
+  outline-style solid
 
   &:hover
-    background-color colorButton
+    background-color colorPalette.buttonHover
     outline-width 3px
 
   &:active
@@ -121,17 +106,18 @@ button
     filter contrast(.2)
 
 
+
 // ==============================
 // Text Output & Form Elements
 // ==============================
 .text-output
-  color colorFormGray
+  color colorPalette.font
   font-family 'Arial', sans-serif
   font-size 12px
   font-weight 400
-  background-color colorFormWhite
   padding 8px 12px
-  border 1px solid colorFormLightGray
+  border 1px solid colorPalette.formOutline
+  border-radius 10px
   height 10px
   white-space nowrap
   overflow hidden
@@ -141,11 +127,12 @@ button
 
   &.path
     direction rtl
+    margin-left 20px
 
 .form-check-label
   transition: filter 0.3s ease
   &:hover
-    filter brightness(120%) drop-shadow(0 0 5px white)
+    filter brightness(120%) drop-shadow(0 0 5px colorPalette.font)
 
 
 // ==============================
@@ -159,8 +146,8 @@ button
   text-align center
   font-size 14px
   font-weight bold
-  color colorFormWhite
-  background-color colorButton
+  color colorPalette.font
+  background-color colorPalette.buttonBG
   border-radius 50%
   cursor pointer
   margin-left 8px
@@ -177,7 +164,7 @@ button
   grid-template-areas "select headline" "actions actions"
   grid-template-columns auto min-content
   grid-template-rows auto
-  background-color colorHeader
+  background-color colorPalette.actionBarBG
   row-gap buttonGap
   padding buttonGap * 2 buttonGap * 4 buttonGap * 2 buttonGap * 4
 
@@ -194,7 +181,7 @@ button
     grid-area headline
     margin 0
     font-size 2rem
-    color colorFont
+    color colorPalette.font
 
 
 // ==============================
@@ -213,8 +200,8 @@ button
 // Error Styles
 // ==============================
 .error
-  border 2px solid colorErrorRed
-  background-color colorFont
+  border 2px solid colorPalette.error
+  background-color colorPalette.errorBG
 
 
 
@@ -223,7 +210,7 @@ button
 // ==============================
 .content
   height 100%
-  background-color colorContent
+  background-color colorPalette.contentBG
   position relative
 
   > div
@@ -236,7 +223,7 @@ button
     top 20px
     left 20px
     background-color rgba(0, 0, 0, 0.5)
-    color colorFont
+    color colorPalette.font
     padding 5px 30px
 
   .processOutput

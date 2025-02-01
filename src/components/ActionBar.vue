@@ -2,7 +2,7 @@
   <div class="action-bar">
     <div class="select-button" v-if="status === 'settings'">
       <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Folder</button>
-      <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
+      <div class="text-output path" v-if="directoryPath">{{ directoryPath }}/----</div>
       <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
     </div>
 
@@ -131,3 +131,28 @@ export default {
   },
 };
 </script>
+
+<style lang="stylus">
+@import 'normalize.css'
+
+.error {
+  border: 2px solid red;
+  background-color: #ffe6e6;
+}
+
+.form-check {
+  margin-bottom: 1rem;
+}
+
+.form-control-inline {
+  width: 80px;
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.brightness-value {
+  margin-left: 5px;
+  font-size: 0.9rem;
+  color: gray;
+}
+</style>

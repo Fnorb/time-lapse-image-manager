@@ -250,8 +250,9 @@ export default {
 
 <style lang="stylus">
 @import 'normalize.css'
-@import './assets/styles/fonts.styl'
-@import './assets/styles/global.styl'
+@import '@/assets/styles/fonts.styl'
+@import '@/assets/styles/theme.styl'
+@import '@/assets/styles/global.styl'
 
 .error {
   border: 2px solid red;
