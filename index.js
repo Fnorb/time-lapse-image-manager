@@ -71,39 +71,38 @@ ipcMain.handle('dialog:openDirectory', async () => {
 
 ipcMain.handle('processImages', async (event, payload) => {
   cancelProcessingRequested = false;
-  const { directoryPath, options } = payload;
+  const { directoryPath, settings } = payload;
   filesFlaggedForDeletion = [];
   let file = '';
 
-  async function calculateBrightness(filePath) {
-    let sharpInstance = sharp(filePath);
 
-    // Apply resize only in fast mode
-    if (options.fast) {
+
+  async function calculateBrightness(filePath) {
+    const fileBuffer = await fs.promises.readFile(filePath); // Read file into memory first
+    let sharpInstance = sharp(fileBuffer);
+  
+    if (settings.fast) {
       sharpInstance = sharpInstance.resize({ width: 100 });
     }
-
-    const { data, info } = await sharpInstance
-      .raw()
-      .toBuffer({ resolveWithObject: true });
-
+  
+    const { data, info } = await sharpInstance.raw().toBuffer({ resolveWithObject: true });
+  
     let totalBrightness = 0;
     let pixelCount = 0;
-
+  
     for (let i = 0; i < data.length; i += info.channels * 10) {
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];
-
+  
       const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
       totalBrightness += brightness;
       pixelCount++;
     }
-
-    const averageBrightness = totalBrightness / pixelCount;
-
-    return Math.round(averageBrightness / 2.55);
+  
+    return Math.round(totalBrightness / pixelCount / 2.55);
   }
+
 
   try {
     const files = await readdirAsync(directoryPath);
@@ -120,18 +119,13 @@ ipcMain.handle('processImages', async (event, payload) => {
 
       const averageBrightness = await calculateBrightness(filePath);
 
-      if (options.minBrightness !== undefined && averageBrightness < options.minBrightness) {
+      if (settings.minBrightness !== undefined && averageBrightness < settings.minBrightness) {
         passed = false;
       }
 
-      if (passed && options.maxBrightness !== undefined && averageBrightness > options.maxBrightness) {
+      if (passed && settings.maxBrightness !== undefined && averageBrightness > settings.maxBrightness) {
         passed = false;
       }
-
-
-      /* if (passed && options.neighborDifference !== undefined && Math.abs(averageBrightness - lastImageBrightness) > options.neighborDifference) {
-        passed = false;
-      }*/ 
 
       if (passed) {
         brightnessValues.push(averageBrightness);
