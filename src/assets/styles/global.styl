@@ -1,6 +1,4 @@
-// ==============================
 // Global Styles (html, body, app-container)
-// ==============================
 html, body, #app, .app-container
   height 100%
   background-color colorPalette.contentBG
@@ -17,65 +15,14 @@ label, input
   height 100%
 
 
-// ==============================
-// Ellipsis Styles & Animation
-// ==============================
-.dots
-  width 10px
-  display inline-block
-
-.dots::after
-  content "."
-  animation dots 1s steps(4, end) infinite
-
-.dots
-  width 10px
-  display inline-block
-
-.dots::after
-  content "."
-  animation dots 1s steps(4, end) infinite
-
-@keyframes dots
-  0%
-    content: ""
-  25%
-    content: "."
-  50%
-    content: ".."
-  75%
-    content: "..."
-  100%
-    content: ""
-
-
-// ==============================
-// Info Question Mark Styles & Animation
-// ==============================
-@keyframes pulse
-  0%, 100%
-    transform scale(1)
-    opacity 1
-  50%
-    transform scale(1.1)
-    opacity 0.8
-
-.info-mark.pulsing
-  animation pulse 2s infinite
-
-
-// ==============================
 // Margin Utility Classes
-// ==============================
 .margin-left
   margin-left buttonMargin
 .margin-right
   margin-right buttonMargin
 
 
-// ==============================
 // Button Styles
-// ==============================
 button
   background-color colorPalette.buttonBG
   font-family 'Arial', sans-serif
@@ -106,10 +53,7 @@ button
     filter contrast(.2)
 
 
-
-// ==============================
 // Text Output & Form Elements
-// ==============================
 .text-output
   color colorPalette.font
   font-family 'Arial', sans-serif
@@ -135,79 +79,14 @@ button
     filter brightness(120%) drop-shadow(0 0 5px colorPalette.font)
 
 
-// ==============================
-// Popper and Tooltip Styles
-// ==============================
-.v-popper--has-tooltip
-  display inline-block
-  width 20px
-  height 20px
-  line-height 20px
-  text-align center
-  font-size 14px
-  font-weight bold
-  color colorPalette.font
-  background-color colorPalette.buttonBG
-  border-radius 50%
-  cursor pointer
-  margin-left 8px
-  transition all 0.3s ease
-  box-shadow 0 2px 4px rgba(0, 0, 0, 0.2)
-
-
-// ==============================
-// Action Bar Styles
-// ==============================
-.action-bar
-  position relative
-  display grid
-  grid-template-areas "select headline" "actions actions"
-  grid-template-columns auto min-content
-  grid-template-rows auto
-  background-color colorPalette.actionBarBG
-  row-gap buttonGap
-  padding buttonGap * 2 buttonGap * 4 buttonGap * 2 buttonGap * 4
-
-  .select-button
-  .action-buttons
-    grid-area select
-    display flex
-    gap buttonGap
-    align-items center
-    &.action-buttons
-      grid-area actions
-
-  h1
-    grid-area headline
-    margin 0
-    font-size 2rem
-    color colorPalette.font
-
-
-// ==============================
-// Settings View Styles
-// ==============================
-.settings
-  grid-area settings
-  height 100%
-  box-shadow 0px 10px 10px rgba(0, 0, 0, 0.1) inset
-
-  h3 
-    margin-top 0
-
-
-// ==============================
 // Error Styles
-// ==============================
 .error
   border 2px solid colorPalette.error
   background-color colorPalette.errorBG
 
 
 
-// ==============================
-// 11. Content Section Styles
-// ==============================
+// Content Styles
 .content
   height 100%
   background-color colorPalette.contentBG
@@ -240,3 +119,69 @@ button
       top 10px
       left 10px
       width fit-content
+
+
+// Info Question Mark Styles & Animation
+@keyframes pulse
+  0%, 100%
+    transform scale(1)
+    opacity 1
+  50%
+    transform scale(1.1)
+    opacity 0.8
+
+.info-mark.pulsing
+  animation pulse 2s infinite
+
+.brightness-value
+  margin-left 5px
+  font-size 0.9rem
+  color gray
+
+
+// Popper and Tooltip Styles
+.v-popper--has-tooltip
+  display inline-block
+  width 20px
+  height 20px
+  line-height 20px
+  text-align center
+  font-size 14px
+  font-weight bold
+  color colorPalette.font
+  background-color colorPalette.buttonBG
+  border-radius 50%
+  cursor pointer
+  margin-left 8px
+  transition all 0.3s ease
+  box-shadow 0 2px 4px rgba(0, 0, 0, 0.2)
+
+
+// Ellipsis Styles & Animation
+.dots
+  width 10px
+  display inline-block
+
+.dots::after
+  content "."
+  animation dots 1s steps(4, end) infinite
+
+.dots
+  width 10px
+  display inline-block
+
+.dots::after
+  content "."
+  animation dots 1s steps(4, end) infinite
+
+@keyframes dots
+  0%
+    content: ""
+  25%
+    content: "."
+  50%
+    content: ".."
+  75%
+    content: "..."
+  100%
+    content: ""

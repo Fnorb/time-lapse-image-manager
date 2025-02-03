@@ -2,7 +2,7 @@
   <div class="action-bar">
     <div class="select-button" v-if="status === 'settings'">
       <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Folder</button>
-      <div class="text-output path" v-if="directoryPath">{{ directoryPath }}/----</div>
+      <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
       <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
     </div>
 
@@ -132,27 +132,30 @@ export default {
 };
 </script>
 
-<style lang="stylus">
-@import 'normalize.css'
+<style scoped lang="stylus">
+  // Action Bar Styles
+  .action-bar
+    position relative
+    display grid
+    grid-template-areas "select headline" "actions actions"
+    grid-template-columns auto min-content
+    grid-template-rows auto
+    background-color colorPalette.actionBarBG
+    row-gap buttonGap
+    padding buttonGap * 2 buttonGap * 4 buttonGap * 2 buttonGap * 4
 
-.error {
-  border: 2px solid red;
-  background-color: #ffe6e6;
-}
+    .select-button
+    .action-buttons
+      grid-area select
+      display flex
+      gap buttonGap
+      align-items center
+      &.action-buttons
+        grid-area actions
 
-.form-check {
-  margin-bottom: 1rem;
-}
-
-.form-control-inline {
-  width: 80px;
-  display: inline-block;
-  margin-left: 10px;
-}
-
-.brightness-value {
-  margin-left: 5px;
-  font-size: 0.9rem;
-  color: gray;
-}
+    h1
+      grid-area headline
+      margin 0
+      font-size 2rem
+      color colorPalette.font
 </style>

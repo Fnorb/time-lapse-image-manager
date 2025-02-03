@@ -223,36 +223,33 @@
   
  
 <style scoped lang="stylus">
-// ==============================
-// Container for the progress bar
-// ==============================
-.progress-bar-container
-  width 100%
-  height 100%
-  position relative
+    // Container for the progress bar
+    .progress-bar-container
+        width 100%
+        height 100%
+        position relative
 
-  canvas
-    background-color #444444
-    height 100%
+    canvas
+        background-color #444444
+        height 100%
 
-// ==============================
-// Display box that overlays the canvas
-// ==============================
-.display
-    position absolute
-    border-radius 10px
-    top 20px
-    left 20px
-    background-color rgba(0, 0, 0, 0.5)
-    color #ffffff
-    padding 5px 30px
-    transition top 0.5s
 
-    &.completed
-        top 60px
+    // Display box that overlays the canvas
+    .display
+        position absolute
+        border-radius 10px
+        top 20px
+        left 20px
+        background-color rgba(0, 0, 0, 0.5)
+        color #ffffff
+        padding 5px 30px
+        transition top 0.5s
 
-    .passed
-        color rgb(0, 200, 0) // Green for passed
-    .failed
-        color rgb(200, 0, 0) // Red for failed
+        &.completed
+            top 60px
+
+        .passed
+            color rgb(0, 200, 0)
+        .failed
+            color rgb(200, 0, 0)
 </style>

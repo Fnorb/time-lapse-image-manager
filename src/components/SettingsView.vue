@@ -141,3 +141,14 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="stylus">
+  // Settings View Styles
+  .settings
+    grid-area settings
+    height 100%
+    box-shadow 0px 10px 10px rgba(0, 0, 0, 0.1) inset
+
+    h3 
+      margin-top 0
+</style>

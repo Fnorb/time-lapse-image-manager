@@ -225,9 +225,16 @@ export default {
 
     async handleStartRenaming() {
       this.appStore.setStatus("renaming");
-     
+
       try {
-        this.appStore.setStatus("resultRenamed");
+        const result = await window.electronAPI.renameFiles(this.directoryPath);
+
+        if (result.success) {
+          this.appStore.setStatus("resultRenamed");
+        } else {
+          console.log(`Renaming failed: ${ result.error }`);
+        }
+
       } catch (error) {
         console.error('Failed to rename files', error);
       }
@@ -249,29 +256,13 @@ export default {
 
 
 <style lang="stylus">
-@import 'normalize.css'
-@import '@/assets/styles/fonts.styl'
-@import '@/assets/styles/theme.styl'
-@import '@/assets/styles/global.styl'
+  @import 'normalize.css'
 
-.error {
-  border: 2px solid red;
-  background-color: #ffe6e6;
-}
+  .form-check
+    margin-bottom 1rem
 
-.form-check {
-  margin-bottom: 1rem;
-}
-
-.form-control-inline {
-  width: 80px;
-  display: inline-block;
-  margin-left: 10px;
-}
-
-.brightness-value {
-  margin-left: 5px;
-  font-size: 0.9rem;
-  color: gray;
-}
+  .form-control-inline
+    width 80px
+    display inline-block
+    margin-left 10px
 </style>

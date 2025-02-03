@@ -1,6 +1,19 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   transpileDependencies: true,
-  publicPath: './', // Set public path to relative, so assets are loaded correctly in Electron
+  publicPath: './',
   outputDir: 'dist-vue',
+  css: {
+    loaderOptions: {
+      stylus: {
+        stylusOptions: {
+          import: [
+            "~@/assets/styles/theme.styl",
+            "~@/assets/styles/fonts.styl",
+            "~@/assets/styles/global.styl",
+          ] 
+        }
+      }
+    }
+  },
 })
