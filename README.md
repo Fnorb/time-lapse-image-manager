@@ -5,6 +5,10 @@
     - [ ] Optimize progress bar for non-linear workflows.
 - [ ] Add filter that finds images with unusual contrast values.
 
+## Requirements
+- **Node.js Version**: v21.7.1
+- **npm Version**: 10.8.2
+
 ## Installation
 1. Clone the repository: `git clone https://github.com/Fnorb/time-lapse-image-manager`
 2. Install dependencies: `npm install`
@@ -40,6 +44,8 @@
 
 ## Technologies Used
 - **Vue.js**
+- **Vue CLI**
+- **Pinia**
 - **Electron**
 - **Sharp**
 - **Stylus**
