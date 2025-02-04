@@ -1,11 +1,9 @@
 # Image Processing App -TimeLapse Tidy
 
 ## To-Do List
-- [ ] Improve renaming function to handle existing file conflicts.
 - [ ] Add parallel processing for better performance.
     - [ ] Optimize progress bar for non-linear workflows.
 - [ ] Add filter that finds images with unusual contrast values.
-- [ ] Support additional image formats (e.g., PNG, BMP).
 
 ## Installation
 1. Clone the repository: `git clone https://github.com/Fnorb/time-lapse-image-manager`
