@@ -121,8 +121,7 @@ export default {
       try {
         this.currentTask = 'Processing Images...';
         const result = await window.electronAPI.processImages(payload);
-        console.log("completed", result)
-
+        
         if (result.success) {
           this.appStore.setFlaggedCount(result.flaggedCount);
           this.result.totalCount = result.totalCount
@@ -148,7 +147,6 @@ export default {
 
         if (this.cancelProcessingRequested) {
           processOutcome = 'byUserCancel';
-          console.log("huh")
           this.appStore.setStatus("settings");
           //console.log('Processing was canceled by the user.');
         }
@@ -167,9 +165,7 @@ export default {
     async updateFileCount() {
       try {
         if (this.directoryPath) {
-          console.log("updating filecount")
           const fileCount = await window.electronAPI.getFileCount(this.directoryPath);
-          console.log("new count: ", fileCount.fileCount)
           this.appStore.setFileCount(fileCount.fileCount);
         } else {
           console.warn("Directory path not available.");
