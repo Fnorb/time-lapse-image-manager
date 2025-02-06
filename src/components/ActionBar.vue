@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore } from '../stores/appStore';
 
 export default {
   name: 'ActionBar',
