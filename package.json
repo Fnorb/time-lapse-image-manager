@@ -2,8 +2,8 @@
   "name": "time-lapse-image-manager",
   "version": "1.0.0",
   "private": true,
-  "description": "",
-  "author": "",
+  "description": "This app processes a directory of images for a timelapse video. It can rename and delete half of the images, as well as analyze their brightness to identify and remove those that are too bright or too dark, resulting in a smoother video.",
+  "author": "Arkadij Liebau",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -61,12 +61,13 @@
     "not ie 11"
   ],
   "_id": "time-lapse-image-manager@1.0.0",
-  "keywords": [],
+  "keywords": ["timelapse", "image processing"],
   "license": "ISC",
-  "readme": "ERROR: No README data found!",
+  "readme": "",
   "build": {
     "directories": {
       "output": "dist-electron"
     }
   }
 }
+

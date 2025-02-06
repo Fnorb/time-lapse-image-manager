@@ -5,6 +5,10 @@
     - [ ] Optimize progress bar for non-linear workflows.
 - [ ] Add filter that finds images with unusual contrast values.
 
+## Requirements
+- **Node.js Version**: v21.7.1
+- **npm Version**: 10.8.2
+
 ## Installation
 1. Clone the repository: `git clone https://github.com/Fnorb/time-lapse-image-manager`
 2. Install dependencies: `npm install`
@@ -23,21 +27,28 @@
 3. In case of the latter, you'll get visual feedback and information on the brightness values of the images and which images fail or pass the filters.
 
 ## Important Files Overview:
-- **App.vue**: Frontend
-- **ProgressBar.vue**: Progress Bar component for visual feedback.
-- **global.styl**: styles for the App.vue
-- **fonts.style**: Font importing.
-- **index.js**: Electron backend for image processing, filtering, renaming and deleting.
-- **.env**: Various variables to configure the backend.
-- **README.MD**: This file.
+- **index.js**: Electron backend for image processing, filtering, renaming and deleting
+- **preload.js**: handles the communication between backend and frontend
+- **vue.config.js**: general vue configuration file
+- **.env**: variables to configure the backend
+- **README.MD**: this file
+- **/src/main.js**: frontend initialisation
+- **/src/App.vue**: frontend
+- **/src/stores/appStore.js**: Pinia store for handling cross-component data
+- **/src/components/ProgressBar.vue**: progress Bar component for visual feedback
+- **/src/components/SettingsView.vue**: settings component where users adjust filter settings
+- **/src/components/ActionBar.vue**: component to handle the different action buttons and minor associated functions
+- **/src/assets/styles/global.styl**: styles for the App.vue
+- **/src/assets/styles/fonts.styl**: font importing
+- **/src/assets/styles/theme.styl**: general theme settings such as colors and margins
 
 ## Technologies Used
 - **Vue.js**
+- **Vue CLI**
+- **Pinia**
 - **Electron**
 - **Sharp**
 - **Stylus**
-
-
 
 ## License
 This project is licensed under the MIT License.
