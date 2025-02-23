@@ -1,50 +1,47 @@
 <template>
   <div class="app-container">
-    
-    <ActionBar
-      @startProcessing="handleStartProcessing"
-      @startRenaming="handleStartRenaming"
-      @confirmDeleteHalf="handleConfirmDeleteHalf"
-      @cancelProcessing="handleCancelProcessing"
-      @cancelResult="handleCancelResult"
-      @deleteFlaggedFiles="handleDeleteFlaggedFiles"
-      @deleteHalfOfImages="handleDeleteHalfOfImages"
-    />
+
+    <ActionBar @startProcessing="handleStartProcessing" @startRenaming="handleStartRenaming"
+      @confirmDeleteHalf="handleConfirmDeleteHalf" @cancelProcessing="handleCancelProcessing"
+      @cancelResult="handleCancelResult" @deleteFlaggedFiles="handleDeleteFlaggedFiles"
+      @deleteHalfOfImages="handleDeleteHalfOfImages" />
 
     <div class="content">
-      <!-- SETTINGS VIEW -->
-      <SettingsView v-if="status === 'settings'"/>
+      <!-- Settings -->
+      <SettingsView v-if="status === 'settings'" />
 
-      <!-- PROCESSING VIEW -->
-      <div class="processOutput" v-if="['processing', 'result', 'confirmationDeleteFlagged', 'renaming'].includes(status)">
-          <div v-if="status === 'renaming'">
-            <div class="result">Renaming files<span class="dots"></span></div>
-          </div>
-          <ProgressBar v-else :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses" :imagesTotal="fileCount"></ProgressBar>
+      <!-- Image analysis output with progress bar -->
+      <div class="processOutput"
+        v-if="['processing', 'result', 'confirmationDeleteFlagged', 'renaming'].includes(status)">
+        <div v-if="status === 'renaming'">
+          <div class="result">Renaming files<span class="dots"></span></div>
+        </div>
+        <ProgressBar v-else :imageBrightnesses="imageBrightnesses" :imageStatuses="imageStatuses"
+          :imagesTotal="fileCount"></ProgressBar>
       </div>
 
-      <!-- ERROR VIEW -->
+      <!-- Error view -->
       <div class="processError" v-if="status === 'error'">
         <div>ERROR: {{ error.message }}</div>
         <div v-if="error.filename !== ''">FILE: {{ error.filename }}</div>
       </div>
 
-      <!-- CONFIRMATION DELETE FLAGGED VIEW -->
+      <!-- Delete flagged files -->
       <div class="confirmation" v-if="status === 'confirmationDeleteFlagged'">
-        {{  this.flaggedCount }} of {{  result.processedCount }} files flagged for deletion.
+        {{ this.flaggedCount }} of {{ result.processedCount }} files flagged for deletion.
       </div>
 
-      <!-- CONFIRMATION DELETE HALF VIEW -->
+      <!-- Delete every 2nd file -->
       <div class="confirmation" v-if="status === 'confirmationDeleteHalf'">
         Delete every second file in the target directory?
       </div>
 
-      <!-- RESULT DELETED -->
+      <!-- Deletion result -->
       <div class="result" v-if="status === 'resultDeletedHalf' || status === 'resultDeleted'">
         {{ result.deleteCount }} {{ result.deleteCount === 1 ? 'file' : 'files' }} deleted.
       </div>
-      
-      <!-- RESULT RENAMED -->
+
+      <!-- Renamed result -->
       <div class="result" v-if="status === 'resultRenamed'">
         All files in target directory renamed.
       </div>
@@ -60,11 +57,13 @@ import SettingsView from './components/SettingsView.vue';
 
 export default {
   name: 'App',
+
   components: {
     ActionBar,
     ProgressBar,
     SettingsView,
   },
+
   data() {
     const appStore = useAppStore();
     return {
@@ -85,6 +84,7 @@ export default {
       cancelProcessingRequested: false,
     };
   },
+
   computed: {
     status() { return useAppStore().status; },
     fileCount() { return useAppStore().fileCount; },
@@ -96,17 +96,27 @@ export default {
       return this.actionBarButtons.filter((button) => button.visible);
     },
   },
+
   methods: {
+    /**
+     * Sets the view to query for user confirmation to delete every 2nd file
+     * @returns {void}
+     */
     handleConfirmDeleteHalf() {
       this.appStore.setStatus("confirmationDeleteHalf");
     },
 
+    /**
+     * Starts the image analysis process
+     * @returns {void}
+     */
     async handleStartProcessing() {
       this.imageStatuses = [];
       this.imageBrightnesses = [];
       this.appStore.setStatus("processing");
       this.cancelProcessingRequested = false;
 
+      // transmit the selected settings to the backend and start the process
       const payload = {
         directoryPath: this.directoryPath,
         settings: {
@@ -116,13 +126,13 @@ export default {
         },
       };
 
-      
+
       let processOutcome = 'byProcessCompleted';
 
       try {
         this.currentTask = 'Processing Images...';
         const result = await window.electronAPI.processImages(payload);
-        
+
         if (result.success) {
           this.appStore.setFlaggedCount(result.flaggedCount);
           this.result.totalCount = result.totalCount
@@ -131,11 +141,11 @@ export default {
           this.error.message = result.error;
           this.error.filename = result.filename;
           this.appStore.setStatus("error");
-          processOutcome = 'byError'; 
+          processOutcome = 'byError';
         }
 
       } catch (error) {
-         processOutcome = 'byError';
+        processOutcome = 'byError';
       } finally {
         this.currentTask = '';
 
@@ -154,6 +164,10 @@ export default {
       }
     },
 
+    /**
+     * resets most of the app on cancel
+     * @returns {void}
+     */
     handleCancelResult() {
       this.result.totalCount = -1;
       this.appStore.setFlaggedCount(-1);
@@ -163,6 +177,10 @@ export default {
       this.updateFileCount();
     },
 
+    /**
+     * Updates the count of the files in the source directory
+     * @returns {void}
+     */
     async updateFileCount() {
       try {
         if (this.directoryPath) {
@@ -176,6 +194,10 @@ export default {
       }
     },
 
+    /**
+     * Deletes the flagged files
+     * @returns {void}
+     */
     async handleDeleteFlaggedFiles() {
       this.appStore.setStatus("processing");
       try {
@@ -184,7 +206,7 @@ export default {
         if (result.success) {
           this.result.deleteCount = result.deleteCount
           this.appStore.setStatus("resultDeleted");
-          //this.updateFileCount();
+          // this.updateFileCount();
         } else {
           this.error.message = result.error;
           this.error.filename = result.filename;
@@ -198,14 +220,22 @@ export default {
       }
     },
 
+    /**
+     * Cancels the image analysis process
+     * @returns {void}
+     */
     handleCancelProcessing() {
       this.cancelProcessingRequested = true;
-      window.electronAPI.cancelProcessing(); 
+      window.electronAPI.cancelProcessing();
     },
 
+    /**
+     * Deletes every 2nd image
+     * @returns {void}
+     */
     async handleDeleteHalfOfImages() {
       this.appStore.setStatus("deleting");
-      
+
       try {
         const result = await window.electronAPI.deleteHalfOfImages(this.directoryPath);
 
@@ -220,6 +250,10 @@ export default {
       }
     },
 
+    /**
+     * Tells the electron backend to rename files
+     * @returns {void}
+     */
     async handleStartRenaming() {
       this.appStore.setStatus("renaming");
 
@@ -229,7 +263,7 @@ export default {
         if (result.success) {
           this.appStore.setStatus("resultRenamed");
         } else {
-          console.log(`Renaming failed: ${ result.error }`);
+          console.log(`Renaming failed: ${result.error}`);
         }
 
       } catch (error) {
@@ -237,14 +271,31 @@ export default {
       }
     },
 
+    /**
+     * Catches data from the backend with information on processed images
+     * @param {string} file - Filepath
+     * @param {string} status - 'failed' | 'passed', depending on whether the file passed all filters or didn't
+     * @param {number} averageBrightess - Value of 0 to 100 describing the images average brightness
+     * @returns {void}
+     */
     onImageStatus(file, status, averageBrightess) {
       this.imageStatuses = [...this.imageStatuses, status];
       this.imageBrightnesses = [...this.imageBrightnesses, averageBrightess];
     },
   },
+
+  /**
+   * Listens for information from the backend about processed images
+   * @returns {void}
+   */
   mounted() {
     window.electronAPI.onImageStatus(this.onImageStatus);
   },
+
+  /** 
+   * Ensures that no listeners remain on unmount
+   * @returns {void}
+   **/
   beforeUnmount() {
     window.electronAPI.removeImageStatusListener();
   },

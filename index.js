@@ -1,4 +1,3 @@
-// Backend Init
 require('dotenv').config();
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
@@ -19,7 +18,8 @@ const SHOW_DEVTOOLS = process.env.SHOW_DEVTOOLS?.toLowerCase() === 'true';
 const validExtensions = process.env.VALID_EXTENSIONS ? process.env.VALID_EXTENSIONS.split(',').map(ext => ext.trim().toLowerCase()) : [];
 
 /**
- * Creates the Electron Apps main window
+ * Creates the window based on environment vars
+ * @returns {any}
  */
 function createMainWindow() {
   let windowWidth = WINDOW_WIDTH;
@@ -52,6 +52,10 @@ function createMainWindow() {
   }
 }
 
+/**
+ * Creates the main window when the app finished initializing
+ * @returns {void}
+ */
 app.whenReady().then(() => {
   createMainWindow();
 
@@ -64,6 +68,7 @@ app.whenReady().then(() => {
 
 /**
  * Exits the app when all windows have been closed (Mac-OS is an exception)).
+ * @returns {void}
  */
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -73,9 +78,9 @@ app.on('window-all-closed', () => {
 
 /**
  * Counts the image files in the provided directory
- * @param {Electron.IpcMainInvokeEvent} event - IPC-event
- * @param {string} directoryPath - Path of target directory
- * @returns {Promise<Object>} - Success or Error and file count
+ * @param {object} event - IPC event
+ * @param {string} directoryPath
+ * @returns {{ success: boolean, fileCount: number } | { success: boolean, error: string }} 
  */
 ipcMain.handle('files:getFileCount', async (event, directoryPath) => {
   try {
@@ -95,7 +100,7 @@ ipcMain.handle('files:getFileCount', async (event, directoryPath) => {
 
 /**
  * Open the directory picker
- * @returns {Promise<Object>} - Success or error and path of chosen directory
+ * @returns {{ success: boolean, fileCount: number, directoryPath: string } | { success: boolean, error: string }} 
  */
 ipcMain.handle('dialog:openDirectory', async () => {
   try {
@@ -114,7 +119,7 @@ ipcMain.handle('dialog:openDirectory', async () => {
     }
 
     const files = await readdirAsync(directoryPath);
-    const visibleFiles = files.filter(file => !file.startsWith('.')); 
+    const visibleFiles = files.filter(file => !file.startsWith('.'));
 
     return { success: true, fileCount: visibleFiles.length, directoryPath };
   } catch (error) {
@@ -124,41 +129,41 @@ ipcMain.handle('dialog:openDirectory', async () => {
 
 /**
  * Calculates the average brightness of an image
- * @param {string} filePath - Path to the image file
- * @param {boolean} fast - Fastmode enabled or disabled
- * @returns {Promise<number>} - Brightness value on a scale of 0 to 100
+ * @param {string} filePath - path to the directory containiner the files
+ * @param {boolean} fast - boolean describing whether images should be reduced in size or not
+ * @returns {number} - Returns the average brightness of the image as a value between 0 and 100
  */
-  async function calculateBrightness(filePath, fast) {
-    const fileBuffer = await fs.promises.readFile(filePath);
-    let sharpInstance = sharp(fileBuffer);
-  
-    if (fast) {
-      sharpInstance = sharpInstance.resize({ width: 100 });
-    }
-  
-    const { data, info } = await sharpInstance.raw().toBuffer({ resolveWithObject: true });
-  
-    let totalBrightness = 0;
-    let pixelCount = 0;
-  
-    for (let i = 0; i < data.length; i += info.channels * 10) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-  
-      const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      totalBrightness += brightness;
-      pixelCount++;
-    }
-  
-    return Math.round(totalBrightness / pixelCount / 2.55);
+async function calculateBrightness(filePath, fast) {
+  const fileBuffer = await fs.promises.readFile(filePath);
+  let sharpInstance = sharp(fileBuffer);
+
+  if (fast) {
+    sharpInstance = sharpInstance.resize({ width: 100 });
   }
+
+  const { data, info } = await sharpInstance.raw().toBuffer({ resolveWithObject: true });
+
+  let totalBrightness = 0;
+  let pixelCount = 0;
+
+  for (let i = 0; i < data.length; i += info.channels * 10) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+
+    const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    totalBrightness += brightness;
+    pixelCount++;
+  }
+
+  return Math.round(totalBrightness / pixelCount / 2.55);
+}
 
 /**
  * Analyzes the images based on filter settings
- * @param {Electron.IpcMainInvokeEvent} event - IPC-event
- * @param {Object} payload - Filter-settings
- * @returns {Promise<Object>} - Returns success or error including the number of images processed, number of images that passed, number of images that failed
+ * @param {object} event - IPC event
+ * @param {object} payload - contains the directory path and filter settings
+ * @returns {{ success: boolean, passedCount: number, totalCount: number } | { success: boolean, error: string }} 
  */
 ipcMain.handle('processImages', async (event, payload) => {
   cancelProcessingRequested = false;
@@ -171,10 +176,7 @@ ipcMain.handle('processImages', async (event, payload) => {
     const validFiles = files.filter(file => validExtensions.includes(path.extname(file).toLowerCase()));
     let passedCount = 0;
 
-    // Iterate through the images and return for each whether it passed or failed
-    /**
-     * 
-     */
+    // Iterate through the images and return for each whether it passed all filters or not
     for (file of validFiles) {
       if (cancelProcessingRequested) {
         return { success: true, error: 'byUserCancel' };
@@ -203,6 +205,8 @@ ipcMain.handle('processImages', async (event, payload) => {
       }
 
       const status = passed ? 'passed' : 'failed';
+
+      // Returns information about the currently analyzed image back to the frontend
       event.sender.send('image-status', { file, status, averageBrightness });
     }
 
@@ -214,7 +218,7 @@ ipcMain.handle('processImages', async (event, payload) => {
 
 /**
  * Stops the current process
- * @returns {Object} - success
+ * @returns {boolean}
  */
 ipcMain.handle('cancelProcessing', () => {
   cancelProcessingRequested = true;
@@ -223,7 +227,7 @@ ipcMain.handle('cancelProcessing', () => {
 
 /**
  * Deletes the flagged images
- * @returns {Promise<Object>} - Success or error
+ * @returns {{ success: boolean, deleteCount: number } | { success: boolean, error: string }} 
  */
 ipcMain.handle('deleteFlaggedFiles', async () => {
   try {
@@ -242,10 +246,10 @@ ipcMain.handle('deleteFlaggedFiles', async () => {
 });
 
 /**
- * Deletes half the images in the target directory
- * @param {Electron.IpcMainInvokeEvent} event - Das IPC-Ereignis.
- * @param {string} directoryPath - Der Pfad des Verzeichnisses.
- * @returns {Promise<Object>} - Erfolg oder Fehler.
+ * Deletes every second image in the target directory
+ * @param {object} event - IPC event
+ * @param {string} directoryPath - path to the directory containiner the files
+ * @returns {{ success: boolean, deleteCount: number } | { success: boolean, error: string }} 
  */
 ipcMain.handle('files:deleteHalf', async (event, directoryPath) => {
   try {
@@ -269,10 +273,13 @@ ipcMain.handle('files:deleteHalf', async (event, directoryPath) => {
 
 /**
  * Renames all files in the target directory
+ * @param {object} event - IPC event
+ * @param {string} directoryPath - path to the directory containiner the files
+ * @returns {{ success: boolean, renamedCount: number } | { success: boolean, error: string }} 
  */
 ipcMain.handle('files:rename', async (event, directoryPath) => {
   const outputPrefix = process.env.RENAME_PREFIX;
-  
+
   try {
     const files = await readdirAsync(directoryPath);
     const imageFiles = files.filter(file => path.extname(file));

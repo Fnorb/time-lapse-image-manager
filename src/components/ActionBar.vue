@@ -1,22 +1,19 @@
 <template>
   <div class="action-bar">
+
+    <!-- Top row action button -->
     <div class="select-button" v-if="status === 'settings'">
       <button class="btn btn-primary" :disabled="status === 'processing'" @click="pickDirectory">Select Folder</button>
       <div class="text-output path" v-if="directoryPath">{{ directoryPath }}</div>
       <div class="text-output" v-if="directoryPath">{{ fileCount }} files</div>
     </div>
 
-    <h1>TimeLapseTidy</h1>      
+    <h1>TimeLapseTidy</h1>
 
+    <!-- List of action buttons generated depending on the current status -->
     <div class="action-buttons">
-      <button
-        v-for="(button, index) in visibleActionBarButtons"
-        :key="index"
-        class="btn"
-        :class="button.class"
-        :disabled="button.disabled"
-        @click="this.$emit(button.event)"
-      >
+      <button v-for="(button, index) in visibleActionBarButtons" :key="index" class="btn" :class="button.class"
+        :disabled="button.disabled" @click="this.$emit(button.event)">
         {{ button.label }}
       </button>
     </div>
@@ -28,6 +25,7 @@ import { useAppStore } from '../stores/appStore';
 
 export default {
   name: 'ActionBar',
+
   computed: {
     status() { return useAppStore().status; },
     fileCount() { return useAppStore().fileCount; },
@@ -36,10 +34,12 @@ export default {
     validated() { return useAppStore().validated; },
     options() { return useAppStore().settings; },
     settings() { return useAppStore().settings; },
+    visibleActionBarButtons() { return this.actionBarButtons.filter((button) => button.visible); },
 
-    visibleActionBarButtons() {
-      return this.actionBarButtons.filter((button) => button.visible);
-    },
+    /**
+     * List of action buttons, describing when which button should be generated and what it should do
+     * @returns {array}
+     */
     actionBarButtons() {
       return [
         {
@@ -85,7 +85,6 @@ export default {
           event: 'cancelResult',
           class: 'btn-primary',
         },
-        
         {
           label: "Delete Files",
           visible: this.status === "confirmationDeleteFlagged" && this.flaggedCount > 0,
@@ -95,30 +94,39 @@ export default {
         },
         {
           label: "Cancel",
-          visible: this.status === "confirmationDeleteFlagged" && this.flaggedCount > 0,
+          visible: (this.status === "confirmationDeleteFlagged" && this.flaggedCount > 0) || this.status === "confirmationDeleteHalf",
           disabled: false,
           event: 'cancelResult',
           class: "btn-primary",
         },
-
       ];
     },
 
+    /**
+     * Determines whether the start button should be clickabl
+     * @returns {boolean}
+     */
     canStartProcessing() {
       return (
         this.validated &&
         this.directoryPath &&
-        (this.settings.minBrightnessChecked || 
-        this.settings.maxBrightnessChecked)
+        (this.settings.minBrightnessChecked ||
+          this.settings.maxBrightnessChecked)
       );
     },
   },
+
   data() {
     return {
       appStore: useAppStore(),
     };
   },
+
   methods: {
+    /**
+     * Lets the user select a source directory
+     * @returns {void}
+     */
     async pickDirectory() {
       try {
         const { fileCount, directoryPath } = await window.electronAPI.openDirectory();
@@ -133,7 +141,7 @@ export default {
 </script>
 
 <style scoped lang="stylus">
-  // Action Bar Styles
+  // action bar Styles
   .action-bar
     position relative
     display grid
