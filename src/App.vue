@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    
     <ActionBar
       @startProcessing="handleStartProcessing"
       @startRenaming="handleStartRenaming"
@@ -54,15 +55,15 @@
 <script>
 import { useAppStore } from './stores/appStore';
 import ActionBar from './components/ActionBar.vue';
-import SettingsView from './components/SettingsView.vue';
 import ProgressBar from './components/ProgressBar.vue';
+import SettingsView from './components/SettingsView.vue';
 
 export default {
   name: 'App',
   components: {
     ActionBar,
-    SettingsView,
     ProgressBar,
+    SettingsView,
   },
   data() {
     const appStore = useAppStore();
